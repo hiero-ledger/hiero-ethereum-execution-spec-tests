@@ -87,6 +87,10 @@ uv run mkdocs serve
 
 then connect to `localhost:8000` in a browser
 
+## About Users and Maintainers
+
+Users and Maintainers guidelines are located in **[Hiero-Ledger's CONTRIBUTING.md file](https://github.com/hiero-ledger/.github/blob/main/CONTRIBUTING.md#about-users-and-maintainers)** under the "About-Users-and-Maintainers" section.
+
 ## License
 
 The Ethereum Execution Layer Specification code is licensed under the [Creative Commons Zero v1.0 Universal](LICENSE.md).
