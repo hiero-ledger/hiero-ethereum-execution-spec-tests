@@ -27,6 +27,11 @@ jobs:
     name: Test html documentation build with mkdocs
     runs-on: ubuntu-latest
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e3f713f2d8f53843e71c69a996d56f51aa9adfb9 # v2.14.1
+        with:
+          egress-policy: audit
+
       - name: Checkout ethereum/execution-specs
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Install uv ${{ vars.UV_VERSION }} and python ${{ vars.DEFAULT_PYTHON_VERSION }}
@@ -43,6 +48,11 @@ jobs:
     name: Validate changelog entries
     runs-on: ubuntu-latest
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e3f713f2d8f53843e71c69a996d56f51aa9adfb9 # v2.14.1
+        with:
+          egress-policy: audit
+
       - name: Checkout ethereum/execution-specs
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Install uv ${{ vars.UV_VERSION }} and python ${{ vars.DEFAULT_PYTHON_VERSION }}
@@ -59,6 +69,11 @@ jobs:
     name: Lint markdown files with markdownlint
     runs-on: ubuntu-latest
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e3f713f2d8f53843e71c69a996d56f51aa9adfb9 # v2.14.1
+        with:
+          egress-policy: audit
+
       - name: Checkout ethereum/execution-specs
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: DavidAnson/markdownlint-cli2-action@05f32210e84442804257b2a6f20b273450ec8265
