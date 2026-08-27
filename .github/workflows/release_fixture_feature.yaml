@@ -6,6 +6,9 @@ on:
       - "tests-*@v*"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   feature-names:
     runs-on: ubuntu-latest
@@ -66,6 +69,9 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     needs: build
     if: startsWith(github.ref, 'refs/tags/tests-')
     steps:
