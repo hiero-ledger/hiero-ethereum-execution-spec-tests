@@ -82,6 +82,7 @@ BLOCKS_BEFORE_FORK = 2
 )
 @pytest.mark.parametrize("timestamp", [15_000 - BLOCKS_BEFORE_FORK], ids=[""])
 @pytest.mark.pre_alloc_mutable
+@pytest.mark.skip(reason="Run On Hedera: EIP7002 is not supported")
 def test_withdrawal_requests_during_fork(
     blockchain_test: BlockchainTestFiller,
     blocks: List[Block],

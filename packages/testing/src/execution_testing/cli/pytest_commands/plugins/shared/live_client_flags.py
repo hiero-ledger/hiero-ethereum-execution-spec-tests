@@ -30,6 +30,20 @@ logger = get_logger(__name__)
 # between the two; the bump keeps txs landing without per-tx requeries).
 FEE_BUMP_MULTIPLIER = 1.5
 
+# Run On Hedera: 1 tinybar. Hedera only tracks whole tinybars, so a
+# multiplied fee value that isn't tinybar-aligned makes
+# `gas_price * gas_limit` land short of a whole tinybar too (for any
+# gas_limit). Callers funding a sender based on this exact figure fund
+# with zero margin, so this misalignment alone can tip a transaction
+# into "insufficient funds" even though the wei math looks exact.
+WEI_TO_TINYBAR = 10_000_000_000
+
+
+# Run On Hedera: Round a wei value up to the nearest whole tinybar.
+def _round_up_to_tinybar(value: int) -> int:
+    """Round a wei value up to the nearest whole tinybar."""
+    return -(-value // WEI_TO_TINYBAR) * WEI_TO_TINYBAR
+
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Register live-client CLI flags."""
@@ -273,8 +287,9 @@ def max_priority_fee_per_gas(
     max_priority_fee_per_gas = default_max_priority_fee_per_gas
     if max_priority_fee_per_gas is None:
         network_max_priority_fee = eth_rpc.max_priority_fee_per_gas()
-        max_priority_fee_per_gas = int(
-            network_max_priority_fee * FEE_BUMP_MULTIPLIER
+        # Run On Hedera: Round a wei value up to the nearest whole tinybar.
+        max_priority_fee_per_gas = _round_up_to_tinybar(
+            int(network_max_priority_fee * FEE_BUMP_MULTIPLIER)
         )
     return max_priority_fee_per_gas
 
@@ -289,7 +304,10 @@ def max_fee_per_gas(
     max_fee_per_gas = default_max_fee_per_gas
     if max_fee_per_gas is None:
         network_gas_price = eth_rpc.gas_price()
-        max_fee_per_gas = int(network_gas_price * FEE_BUMP_MULTIPLIER)
+        # Run On Hedera: Round a wei value up to the nearest whole tinybar.
+        max_fee_per_gas = _round_up_to_tinybar(
+            int(network_gas_price * FEE_BUMP_MULTIPLIER)
+        )
     if max_priority_fee_per_gas > max_fee_per_gas:
         # Priority fee can exceed max fee due to query timing; bump.
         max_fee_per_gas = max_priority_fee_per_gas + 1
@@ -305,7 +323,10 @@ def max_fee_per_blob_gas(
     max_fee_per_blob_gas = default_max_fee_per_blob_gas
     if max_fee_per_blob_gas is None:
         network_blob_base_fee = eth_rpc.blob_base_fee()
-        max_fee_per_blob_gas = int(network_blob_base_fee * FEE_BUMP_MULTIPLIER)
+        # Run On Hedera: Round a wei value up to the nearest whole tinybar.
+        max_fee_per_blob_gas = _round_up_to_tinybar(
+            int(network_blob_base_fee * FEE_BUMP_MULTIPLIER)
+        )
     return max_fee_per_blob_gas
 
 

@@ -81,7 +81,14 @@ def authorization_list(
     """
     if RefundType.AUTHORIZATION_EXISTING_AUTHORITY not in refund_type:
         return None
-    return [AuthorizationTuple(signer=pre.fund_eoa(1), address=Address(1))]
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or
+    # 10_000_000_000 wei) since Hedera rejects any nonzero value below
+    # that. Only needs to be nonzero to mark the authority as "existing".
+    return [
+        AuthorizationTuple(
+            signer=pre.fund_eoa(10_000_000_000), address=Address(1)
+        )
+    ]
 
 
 @pytest.fixture

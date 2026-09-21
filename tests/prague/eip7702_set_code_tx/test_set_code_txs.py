@@ -70,7 +70,9 @@ auth_account_start_balance = 0
 
 @pytest.mark.parametrize(
     "tx_value",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 @pytest.mark.parametrize(
     "suffix,succeeds",
@@ -106,7 +108,8 @@ def test_self_sponsored_set_code(
     set_code = (
         Op.SSTORE(storage.store_next(sender), Op.ORIGIN)
         + Op.SSTORE(storage.store_next(sender), Op.CALLER)
-        + Op.SSTORE(storage.store_next(tx_value), Op.CALLVALUE)
+        # Run On Hedera: CALLVALUE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+        + Op.SSTORE(storage.store_next(tx_value // 10_000_000_000), Op.CALLVALUE)
         + suffix
     )
     set_code_to_address = pre.deploy_contract(
@@ -145,13 +148,17 @@ def test_self_sponsored_set_code(
     "eoa_balance,self_sponsored",
     [
         pytest.param(0, False, id="zero_balance_authority"),
-        pytest.param(1, False, id="one_wei_balance_authority"),
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+        # since Hedera rejects any nonzero value below that
+        pytest.param(10_000_000_000, False, id="one_wei_balance_authority"),
         pytest.param(None, True, id="self_sponsored_tx"),
     ],
 )
 @pytest.mark.parametrize(
     "tx_value",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 @pytest.mark.parametrize(
     "suffix,succeeds",
@@ -184,7 +191,8 @@ def test_set_code_to_sstore(
     set_code = (
         Op.SSTORE(storage.store_next(sender), Op.ORIGIN)
         + Op.SSTORE(storage.store_next(sender), Op.CALLER)
-        + Op.SSTORE(storage.store_next(tx_value), Op.CALLVALUE)
+        # Run On Hedera: CALLVALUE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+        + Op.SSTORE(storage.store_next(tx_value // 10_000_000_000), Op.CALLVALUE)
         + suffix
     )
     set_code_to_address = pre.deploy_contract(
@@ -493,7 +501,9 @@ def test_set_code_to_tstore_available_at_correct_address(
 )
 @pytest.mark.parametrize(
     "balance",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 def test_set_code_to_self_destruct(
     state_test: StateTestFiller,
@@ -768,7 +778,9 @@ def test_set_code_to_contract_creator(
 
 @pytest.mark.parametrize(
     "value",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 @pytest.mark.with_all_call_opcodes
 @pytest.mark.filter_combinations(
@@ -904,7 +916,9 @@ def test_set_code_max_depth_call_stack(
 @pytest.mark.with_all_call_opcodes
 @pytest.mark.parametrize(
     "value",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 @pytest.mark.filter_combinations(
     lambda call_opcode, value, **_: (
@@ -1307,7 +1321,9 @@ def test_call_into_chain_delegating_set_code(
 
 @pytest.mark.parametrize(
     "balance",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 @pytest.mark.parametrize(
     "set_code_type",
@@ -1347,11 +1363,15 @@ def test_ext_code_on_set_code(
             set_code_to_address = pre.fund_eoa(0)
         case AddressType.EOA:
             set_code = Bytecode()
-            set_code_to_address = pre.fund_eoa(1)
+            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+            # since Hedera rejects any nonzero value below that
+            set_code_to_address = pre.fund_eoa(10_000_000_000)
         case AddressType.EOA_WITH_SET_CODE:
             set_code_account = pre.fund_eoa(0)
             set_code = Spec.delegation_designation(set_code_account)
-            set_code_to_address = pre.fund_eoa(1, delegation=set_code_account)
+            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+            # since Hedera rejects any nonzero value below that
+            set_code_to_address = pre.fund_eoa(10_000_000_000, delegation=set_code_account)
         case AddressType.CONTRACT:
             set_code = Op.STOP
             set_code_to_address = pre.deploy_contract(set_code)
@@ -1426,7 +1446,9 @@ def test_ext_code_on_set_code(
 
 @pytest.mark.parametrize(
     "balance",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 def test_ext_code_on_self_set_code(
     state_test: StateTestFiller,
@@ -1462,7 +1484,8 @@ def test_ext_code_on_self_set_code(
     set_code_storage[slot_ext_code_copy_result] = Hash(
         Spec.delegation_designation(set_code_address), right_padding=True
     )
-    set_code_storage[slot_ext_balance_result] = balance
+    # Run On Hedera: BALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+    set_code_storage[slot_ext_balance_result] = balance // 10_000_000_000
 
     tx = Transaction(
         to=auth_signer,
@@ -1660,7 +1683,9 @@ def test_set_code_address_and_authority_warm_state_call_types(
     "balance,self_sponsored",
     [
         pytest.param(0, False, id="zero_balance_authority"),
-        pytest.param(1, False, id="one_wei_balance_authority"),
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+        # since Hedera rejects any nonzero value below that
+        pytest.param(10_000_000_000, False, id="one_wei_balance_authority"),
         pytest.param(None, True, id="self_sponsored_tx"),
     ],
 )
@@ -1789,7 +1814,9 @@ def test_ext_code_on_chain_delegating_set_code(
             auth_signer_1_balance - gas_limit * max_fee_per_gas
         )
     else:
-        auth_signer_1_balance = 1
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+        # since Hedera rejects any nonzero value below that
+        auth_signer_1_balance = 10_000_000_000
         auth_signer_1 = pre.fund_eoa(auth_signer_1_balance)
         sender = pre.fund_eoa()
         expected_ext_balance_1 = auth_signer_1_balance
@@ -1897,7 +1924,9 @@ def test_ext_code_on_chain_delegating_set_code(
 
 @pytest.mark.parametrize(
     "balance",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 def test_self_code_on_set_code(
     state_test: StateTestFiller,
@@ -2048,7 +2077,9 @@ def test_set_code_to_account_deployed_in_same_tx(
 )
 @pytest.mark.parametrize(
     "balance",
-    [0, 1],
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    [0, 10_000_000_000],
 )
 @pytest.mark.parametrize("call_set_code_first", [False, True])
 @pytest.mark.parametrize("create_opcode", [Op.CREATE, Op.CREATE2])
@@ -3108,8 +3139,10 @@ def test_set_code_to_precompile(
     auth_signer = pre.fund_eoa(auth_account_start_balance)
 
     if "value" in call_opcode.kwargs:
-        call_bytecode = call_opcode(address=auth_signer, gas=0, value=1)
-        value = 1
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+        # since Hedera rejects any nonzero value below that
+        call_bytecode = call_opcode(address=auth_signer, gas=0, value=10_000_000_000)
+        value = 10_000_000_000
     else:
         call_bytecode = call_opcode(address=auth_signer, gas=0)
         value = 0
@@ -3208,7 +3241,9 @@ def test_set_code_to_precompile_not_enough_gas_for_precompile_execution(
     tests in ``test_state_gas_set_code.py``. A precompile delegation
     target adds no new path there because its body never runs.
     """
-    auth_signer = pre.fund_eoa(amount=1)
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    auth_signer = pre.fund_eoa(amount=10_000_000_000)
     auth = AuthorizationTuple(
         address=Address(precompile), nonce=0, signer=auth_signer
     )
@@ -3230,7 +3265,9 @@ def test_set_code_to_precompile_not_enough_gas_for_precompile_execution(
         sender=pre.fund_eoa(),
         to=auth_signer,
         gas_limit=intrinsic_gas,
-        value=1,
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+        # since Hedera rejects any nonzero value below that
+        value=10_000_000_000,
         authorization_list=[auth],
         # explicitly check expected gas, no precompile code executed
         expected_receipt=TransactionReceipt(
@@ -3511,8 +3548,11 @@ def test_eoa_tx_after_set_code(
                     sender=auth_signer,
                     to=auth_signer,
                     value=0,
-                    max_fee_per_gas=1_000,
-                    max_priority_fee_per_gas=1_000,
+                    # Run On Hedera: drop the `max_fee_per_gas`/
+                    # `max_priority_fee_per_gas` override — leaving them
+                    # unset lets set_gas_price() fill them with the live
+                    # network's real fee instead of a placeholder below
+                    # Hedera's actual required gas price.
                 )
             )
         case 3:
@@ -3670,7 +3710,10 @@ def test_empty_authorization_list(
 ) -> None:
     """Test sending an invalid transaction with empty authorization list."""
     tx = Transaction(
-        to=pre.deploy_contract(code=b""),
+        # Run On Hedera: use `Bytecode()` instead of `b""` — execute-remote
+        # mode builds a real on-chain deployment tx via Initcode, which
+        # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check.
+        to=pre.deploy_contract(code=Bytecode()),
         value=0,
         authorization_list=[],
         error=TransactionException.TYPE_4_EMPTY_AUTHORIZATION_LIST,
@@ -4233,7 +4276,9 @@ def test_creating_delegation_designation_contract(
     else:
         create_init = Initcode(deploy_code=Spec.delegation_designation(sender))
     contract_a = pre.deploy_contract(
-        balance=100,
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+        # since Hedera rejects any nonzero value below that
+        balance=10_000_000_000,
         code=Op.MSTORE(0, Op.CALLDATALOAD(0))
         + Op.SSTORE(
             storage.store_next(0, "contract_a_create_result"),
@@ -4253,7 +4298,9 @@ def test_creating_delegation_designation_contract(
         address=contract_a, nonce=1, initcode=create_init, opcode=create_opcode
     )
     post = {
-        contract_a: Account(balance=100, storage=storage),
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+        # since Hedera rejects any nonzero value below that
+        contract_a: Account(balance=10_000_000_000, storage=storage),
         create_address: Account.NONEXISTENT,
     }
     state_test(env=env, pre=pre, post=post, tx=tx)
@@ -4307,6 +4354,16 @@ def test_many_delegations(
         + entry_code_gas,
         max_gas,
     )
+    # Run On Hedera: cap at 300 delegations. Post-state verification
+    # (get_alloc) sends one unchunked JSON-RPC batch request with
+    # getBalance/getCode/getTransactionCount for every address in `post`.
+    # At the full computed count (598 signers + entry contract) that
+    # batch body is ~232 KB; Hedera enforces a 131072-byte request-size
+    # limit, so the relay returns a malformed response (missing `id`)
+    # instead of a clean error. 300 addresses keep the batch at ~117 KB,
+    # comfortably under the limit.
+    delegation_count = min(delegation_count, 300)
+
 
     entry_address = pre.deploy_contract(entry_code)
 
@@ -4443,7 +4500,9 @@ def test_authorization_reusing_nonce(
             nonce=0,
             gas_limit=tx1_gas,
             to=recipient,
-            value=1,
+            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+            # since Hedera rejects any nonzero value below that
+            value=10_000_000_000,
         ),
         Transaction(
             sender=sender,
@@ -4464,7 +4523,9 @@ def test_authorization_reusing_nonce(
         pre=pre,
         blocks=[Block(txs=txs)],
         post={
-            recipient: Account(balance=1),
+            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+            # since Hedera rejects any nonzero value below that
+            recipient: Account(balance=10_000_000_000),
             auth_signer: Account(nonce=1, code=b""),
             sender: Account(nonce=1),
         },
@@ -4550,7 +4611,7 @@ def test_set_code_from_account_with_non_delegating_code(
 
 @pytest.mark.inclusion_test
 @pytest.mark.parametrize(
-    "max_fee_per_gas, max_priority_fee_per_gas, expected_error",
+    "tx_max_fee_per_gas, tx_max_priority_fee_per_gas, expected_error",
     [
         pytest.param(
             6,
@@ -4562,8 +4623,14 @@ def test_set_code_from_account_with_non_delegating_code(
             id="insufficient_max_fee_per_gas",
         ),
         pytest.param(
-            7,
-            8,
+            # Run On Hedera: bumped from (7, 8) — the auto-filled 15M gas
+            # limit times a single-digit fee funds the sender with a
+            # sub-tinybar amount, which Hedera rejects as a nonzero
+            # transfer below its 10_000_000_000 wei (1 tinybar) minimum.
+            # 2_000 keeps priority > max_fee (still triggers the same
+            # exception) while clearing that floor with margin.
+            2_000,
+            2_001,
             TransactionException.PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS,
             id="priority_greater_than_max_fee_per_gas",
         ),
@@ -4574,8 +4641,8 @@ def test_set_code_from_account_with_non_delegating_code(
 def test_set_code_transaction_fee_validations(
     state_test: StateTestFiller,
     pre: Alloc,
-    max_fee_per_gas: int,
-    max_priority_fee_per_gas: int,
+    tx_max_fee_per_gas: int,
+    tx_max_priority_fee_per_gas: int,
     expected_error: TransactionException,
 ) -> None:
     """
@@ -4587,8 +4654,8 @@ def test_set_code_transaction_fee_validations(
         sender=pre.fund_eoa(),
         to=auth_signer,
         value=0,
-        max_fee_per_gas=max_fee_per_gas,
-        max_priority_fee_per_gas=max_priority_fee_per_gas,
+        max_fee_per_gas=tx_max_fee_per_gas,
+        max_priority_fee_per_gas=tx_max_priority_fee_per_gas,
         authorization_list=[
             AuthorizationTuple(
                 address=set_to_code,

@@ -89,7 +89,8 @@ def test_create_suicide_during_transaction_create(
         opcode=create_opcode,
     )
 
-    tx_value = 100
+    # Run On Hedera: value must be >= 1 tinybar (10_000_000_000 wei) since Hedera rejects any nonzero value below that
+    tx_value = 10_000_000_000
     tx = Transaction(
         to=None if transaction_create else contract_deploy,
         data=contract_initcode,

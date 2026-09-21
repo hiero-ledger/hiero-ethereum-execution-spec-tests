@@ -278,14 +278,16 @@ def test_pointer_measurements(
     env = Environment()
 
     sender = pre.fund_eoa()
-    pointer = pre.fund_eoa(amount=100)
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
+    pointer = pre.fund_eoa(amount=10_000_000_000)
 
     storage_normal: Storage = Storage()
     storage_pointer: Storage = Storage()
     storage_pointer_code: Storage = Storage()  # this storage will be applied
     # to pointer address
     pointer_code = pre.deploy_contract(
-        balance=200,
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
+        balance=20_000_000_000,
         code=Op.SSTORE(
             storage_pointer_code.store_next(pointer, "address"), Op.ADDRESS()
         )
@@ -294,7 +296,8 @@ def test_pointer_measurements(
         )
         + Op.CALL(gas=1000, address=0, value=3)
         + Op.SSTORE(
-            storage_pointer_code.store_next(100, "selfbalance"),
+            # Run On Hedera: 10_000_000_000 wei = 10 tinybar
+            storage_pointer_code.store_next(1, "selfbalance"),
             Op.SELFBALANCE(),
         )
         + Op.SSTORE(
@@ -347,7 +350,8 @@ def test_pointer_measurements(
         )
         + Op.SSTORE(storage_normal.store_next(0, "extcodecopy"), Op.MLOAD(0))
         + Op.SSTORE(
-            storage_normal.store_next(100, "balance"), Op.BALANCE(pointer)
+            # Run On Hedera: BALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+            storage_normal.store_next(1, "balance"), Op.BALANCE(pointer)
         )
         + Op.STOP,
     )
@@ -373,7 +377,8 @@ def test_pointer_measurements(
             Op.MLOAD(0),
         )
         + Op.SSTORE(
-            storage_pointer.store_next(100, "balance"), Op.BALANCE(pointer)
+            # Run On Hedera: BALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+            storage_pointer.store_next(1, "balance"), Op.BALANCE(pointer)
         )
         + Op.STOP,
     )
@@ -402,7 +407,8 @@ def test_pointer_measurements(
     tx_pointer_call = Transaction(
         to=pointer,
         data=bytes.fromhex("11223344"),
-        value=3,
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
+        value=30_000_000_000,
         sender=sender,
     )
 
@@ -1406,7 +1412,8 @@ def test_pointer_reentry(state_test: StateTestFiller, pre: Alloc) -> None:
     slot_pointer_extcodehash = storage_pointer_b.store_next(0, "extcodehash")
 
     sender = pre.fund_eoa()
-    pointer_b = pre.fund_eoa(amount=1000)
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
+    pointer_b = pre.fund_eoa(amount=100_000_000_000)
     proxy = pre.deploy_contract(
         code=Op.MSTORE(arg_contract, Op.CALLDATALOAD(arg_contract))
         + Op.MSTORE(arg_action, Op.CALLDATALOAD(arg_action))
@@ -1453,7 +1460,8 @@ def test_pointer_reentry(state_test: StateTestFiller, pre: Alloc) -> None:
                         Op.ADDRESS(),
                     )
                     + Op.SSTORE(
-                        storage_pointer_b.store_next(1000, "selfbalance"),
+                        # Run On Hedera: 100_000_000_000 wei = 10 tinybar
+                        storage_pointer_b.store_next(10, "selfbalance"),
                         Op.SELFBALANCE(),
                     )
                     + Op.SSTORE(
@@ -1502,7 +1510,8 @@ def test_pointer_reentry(state_test: StateTestFiller, pre: Alloc) -> None:
                     )
                     + Op.SSTORE(slot_reentry_address, Op.ADDRESS())
                     + Op.SSTORE(
-                        storage_b.store_next(100, "selfbalance"),
+                        # Run On Hedera: SELFBALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+                        storage_b.store_next(1, "selfbalance"),
                         Op.SELFBALANCE(),
                     )
                     + Op.SSTORE(
@@ -2058,7 +2067,8 @@ def test_pointer_resets_an_empty_code_account_with_storage(
         data=Op.SSTORE(6, 6)
         + Op.MSTORE(0, deploy_code.hex())
         + Op.RETURN(32 - len(deploy_code), len(deploy_code)),
-        value=1000,
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
+        value=10_000_000_000,
         nonce=6,
         sender=sender,
         authorization_list=[

@@ -58,7 +58,8 @@ from .common import CallArgs, generate_identity_call_bytecode
         pytest.param(
             CallArgs(gas=0x30D40, value=0x1, args_size=0x0),
             (0x1,),
-            0x1,
+            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
+            0x2540BE400,
             True,
             id="identity_1_nonzerovalue",
         ),

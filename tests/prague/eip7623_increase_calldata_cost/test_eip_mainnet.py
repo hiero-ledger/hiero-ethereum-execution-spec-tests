@@ -54,9 +54,7 @@ pytestmark = [pytest.mark.valid_at("Prague"), pytest.mark.mainnet]
             ),
             None,
             id="type_3",
-            marks=pytest.mark.execute(
-                pytest.mark.skip(reason="Blob txs not supported by execute")
-            ),
+            marks=pytest.mark.skip(reason="Run On Hedera: type 3 is not supported"),
         ),
         pytest.param(
             4,

@@ -484,7 +484,9 @@ def authorize_to_address(
         case AddressType.EMPTY_ACCOUNT:
             return pre.fund_eoa(0)
         case AddressType.EOA:
-            return pre.fund_eoa(1)
+            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+            # since Hedera rejects any nonzero value below that
+            return pre.fund_eoa(10_000_000_000)
         case AddressType.CONTRACT:
             return pre.deploy_contract(Op.STOP)
         case _:
@@ -858,7 +860,9 @@ def gas_test_parameter_args(
             pytest.param(
                 {
                     "signer_type": SignerType.SINGLE_SIGNER,
-                    "authorizations_count": many_authorizations_count,
+                    # Run On Hedera: MAX_CHILD_RECORDS=50, so we authorizations_count>50 we got
+                    # `Transaction rejected: MAX_CHILD_RECORDS_EXCEEDED` -> `not included in a block after 15 seconds`
+                    "authorizations_count": 50,
                 },
                 id="many_valid_authorizations_single_signer",
             ),

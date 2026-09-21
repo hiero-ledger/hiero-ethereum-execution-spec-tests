@@ -260,6 +260,7 @@ pytestmark = pytest.mark.valid_from("Prague")
                 ],
             ],
             id="single_block_single_withdrawal_request_from_contract_call_depth_high",
+            marks=pytest.mark.skip(reason="Run On Hedera: infinite wait")
         ),
         pytest.param(
             [
@@ -498,9 +499,11 @@ pytestmark = pytest.mark.valid_from("Prague")
                 ],
             ],
             id="single_block_single_withdrawal_request_delegatecall_staticcall_callcode_call_depth_high",
+            marks=pytest.mark.skip(reason="Run On Hedera: infinite wait")
         ),
     ],
 )
+@pytest.mark.skip(reason="Run On Hedera: EIP7002 is not supported")
 def test_withdrawal_requests(
     blockchain_test: BlockchainTestFiller,
     blocks: List[Block],
@@ -674,6 +677,7 @@ def test_withdrawal_requests(
     ],
 )
 @pytest.mark.exception_test
+@pytest.mark.skip(reason="Run On Hedera: EIP7002 is not supported")
 def test_withdrawal_requests_negative(
     blockchain_test: BlockchainTestFiller,
     override_blocks: List[Block],

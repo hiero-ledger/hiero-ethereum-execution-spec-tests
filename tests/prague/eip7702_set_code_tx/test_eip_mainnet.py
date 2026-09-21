@@ -32,12 +32,15 @@ def test_eip_7702(
     sender = pre.fund_eoa()
     auth_signer = sender
 
-    tx_value = 1
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+    # since Hedera rejects any nonzero value below that
+    tx_value = 10_000_000_000
 
     set_code = (
         Op.SSTORE(storage.store_next(sender), Op.ORIGIN)
         + Op.SSTORE(storage.store_next(sender), Op.CALLER)
-        + Op.SSTORE(storage.store_next(tx_value), Op.CALLVALUE)
+        # Run On Hedera: CALLVALUE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+        + Op.SSTORE(storage.store_next(tx_value // 10_000_000_000), Op.CALLVALUE)
         + Op.STOP
     )
     set_code_to_address = pre.deploy_contract(
