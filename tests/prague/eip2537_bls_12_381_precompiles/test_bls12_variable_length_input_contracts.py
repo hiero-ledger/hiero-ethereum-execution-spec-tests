@@ -259,6 +259,7 @@ def get_split_discount_table_by_fork(
     return parametrize_by_fork
 
 
+@pytest.mark.skip(reason="Run On Hedera: requires ~60kk gas, that is way more than Hedera (15kk) and GETH allow. Same failure on Hedera and GETH")
 @pytest.mark.parametrize_by_fork(
     "precompile_gas_list,precompile_data_length_list",
     get_split_discount_table_by_fork(
@@ -408,6 +409,7 @@ def test_invalid_length_g1msm(
     )
 
 
+@pytest.mark.skip(reason="Run On Hedera: requires ~120kk gas, that is way more than Hedera (15kk) and GETH allow. Same failure on Hedera and GETH")
 @pytest.mark.parametrize_by_fork(
     "precompile_gas_list,precompile_data_length_list",
     get_split_discount_table_by_fork(

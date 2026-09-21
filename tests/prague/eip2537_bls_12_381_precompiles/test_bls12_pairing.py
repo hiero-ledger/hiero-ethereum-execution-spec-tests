@@ -31,6 +31,10 @@ from .spec import PointG1, PointG2, Spec, pairing_gas, ref_spec_2537
 REFERENCE_SPEC_GIT_PATH = ref_spec_2537.git_path
 REFERENCE_SPEC_VERSION = ref_spec_2537.version
 
+# Run On Hedera: cap generated call data at Hedera's JSON-RPC relay call
+# data size limit, which rejects oversized transactions regardless of gas.
+MAX_CALLDATA_SIZE = 131_072
+
 pytestmark = [
     pytest.mark.valid_from("Prague"),
     pytest.mark.parametrize("precompile_address", [Spec.PAIRING], ids=[""]),
@@ -150,10 +154,11 @@ def binary_search(
     iteration_data: bytes,
     suffix_data: bytes = b"",
     extra_gas: int = 100_000,
+    max_calldata_size: int | None = None,
 ) -> Tuple[int, bytes]:
     """
     Calculate the optimal transaction gas limit and input data to stay below
-    the maximum gas limit.
+    the maximum gas limit and, if given, the maximum call data size.
     """
     intrinsic_gas_cost_calculator = (
         fork.transaction_intrinsic_cost_calculator()
@@ -162,6 +167,9 @@ def binary_search(
     len_iteration_data = len(iteration_data)
     len_prefix_data = len(suffix_data)
 
+    def calc_calldata_size(n: int) -> int:
+        return (len_iteration_data * n) + len_prefix_data
+
     def calc_tx_gas_limit(n: int) -> int:
         return (
             extra_gas
@@ -169,22 +177,28 @@ def binary_search(
                 calldata=(iteration_data * n) + suffix_data
             )
             + memory_expansion_gas_calculator(
-                new_bytes=(len_iteration_data * n) + len_prefix_data,
+                new_bytes=calc_calldata_size(n),
             )
-            + pairing_gas((len_iteration_data * n) + len_prefix_data)
+            + pairing_gas(calc_calldata_size(n))
+        )
+
+    def exceeds_limits(n: int) -> bool:
+        return calc_tx_gas_limit(n) > max_gas_limit or (
+            max_calldata_size is not None
+            and calc_calldata_size(n) > max_calldata_size
         )
 
     low = 1
     high = 2
 
-    while calc_tx_gas_limit(high) < max_gas_limit:
+    while not exceeds_limits(high):
         low = high
         high *= 2
 
     # Binary search for exact fit
     while low < high:
         mid = (low + high) // 2
-        if calc_tx_gas_limit(mid) > max_gas_limit:
+        if exceeds_limits(mid):
             high = mid
         else:
             low = mid + 1
@@ -222,6 +236,7 @@ def test_valid_multi_inf(
         max_gas_limit=max_gas_limit,
         iteration_data=inf_data,
         extra_gas=extra_gas,
+        max_calldata_size=MAX_CALLDATA_SIZE,
     )
 
     tx = Transaction(
@@ -438,6 +453,7 @@ def test_invalid_multi_inf(
         iteration_data=inf_data,
         suffix_data=invalid_data,
         extra_gas=extra_gas,
+        max_calldata_size=MAX_CALLDATA_SIZE,
     )
 
     tx = Transaction(

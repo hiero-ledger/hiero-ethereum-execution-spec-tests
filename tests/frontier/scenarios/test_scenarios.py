@@ -241,7 +241,10 @@ def test_scenarios(
         if scenario.category == "double_call_combinations":
             tx_max_gas *= 2
 
-        tx_gasprice: int = 10
+        # Run On Hedera: Hedera's current network gas price (710 Gwei, via eth_gasPrice)
+        # so the auto-computed tx_origin funding amount (sum of gas_limit * gas_price) clears the 1 tinybar
+        # (10_000_000_000 wei) minimum nonzero value Hedera enforces
+        tx_gasprice: int = 710_000_000_000
         exec_env = ExecutionEnvironment(
             fork=fork,
             origin=tx_origin,

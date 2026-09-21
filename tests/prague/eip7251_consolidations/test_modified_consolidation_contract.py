@@ -139,6 +139,7 @@ def test_extra_consolidations(
     [ConsolidationRequest.system_contract_address],
 )
 @generate_system_contract_error_test()  # type: ignore[arg-type]
+@pytest.mark.skip(reason="Run On Hedera: EIP7251 is not supported")
 def test_system_contract_errors() -> None:
     """
     Test consolidation system contract raising different errors when called by

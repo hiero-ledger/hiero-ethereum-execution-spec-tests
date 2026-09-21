@@ -165,9 +165,9 @@ def get_fork_permutations(fork: Fork) -> Generator[ParameterSet, None, None]:
     yield pytest.param(over_cap_interactions, id="+".join(ids))
 
 
+@pytest.mark.skip(reason="Run On Hedera: EIP7685 is not supported")
 @pytest.mark.parametrize_by_fork("requests", get_fork_permutations)
 @pytest.mark.eels_base_coverage
-@EIPChecklist.ExecutionLayerRequest.Test.CrossRequestType.Update(eip=[8282])
 def test_valid_multi_type_requests(
     blockchain_test: BlockchainTestFiller,
     pre: Alloc,
@@ -185,6 +185,101 @@ def test_valid_multi_type_requests(
         pre=pre,
         post={},
         blocks=blocks,
+    )
+
+
+@pytest.mark.skip(reason="Run On Hedera: EIP7685 is not supported")
+@pytest.mark.parametrize("requests", [*get_permutations()])
+def test_valid_multi_type_request_from_same_tx(
+    blockchain_test: BlockchainTestFiller,
+    pre: Alloc,
+    requests: List[DepositRequest | WithdrawalRequest | ConsolidationRequest],
+    fork: Fork,
+) -> None:
+    """
+    Test making a deposit to the beacon chain deposit contract and a withdrawal
+    in the same tx.
+    """
+    withdrawal_request_fee: int = 1
+    consolidation_request_fee: int = 1
+
+    calldata: bytes = b""
+    contract_code: Bytecode = Bytecode()
+    total_value: int = 0
+    storage: Storage = Storage()
+
+    for request in requests:
+        calldata_start: int = len(calldata)
+        current_calldata: bytes = request.calldata
+        calldata += current_calldata
+
+        contract_code += Op.CALLDATACOPY(
+            0, calldata_start, len(current_calldata)
+        )
+
+        call_contract_address: int = 0
+        value: int = 0
+        if isinstance(request, DepositRequest):
+            call_contract_address = Spec_EIP6110.DEPOSIT_CONTRACT_ADDRESS
+            value = request.value
+        elif isinstance(request, WithdrawalRequest):
+            call_contract_address = (
+                Spec_EIP7002.WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS
+            )
+            value = withdrawal_request_fee
+        elif isinstance(request, ConsolidationRequest):
+            call_contract_address = (
+                Spec_EIP7251.CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS
+            )
+            value = consolidation_request_fee
+
+        total_value += value
+
+        contract_code += Op.SSTORE(
+            storage.store_next(1),
+            Op.CALL(
+                address=call_contract_address,
+                value=value,
+                args_offset=0,
+                args_size=len(current_calldata),
+            ),
+        )
+
+    sender: EOA = pre.fund_eoa()
+    contract_address: Address = pre.deploy_contract(
+        code=contract_code,
+    )
+
+    tx: Transaction = Transaction(
+        to=contract_address,
+        value=total_value,
+        data=calldata,
+        sender=sender,
+    )
+
+    blockchain_test(
+        genesis_environment=Environment(),
+        pre=pre,
+        post={
+            contract_address: Account(
+                storage=storage,
+            )
+        },
+        blocks=[
+            Block(
+                txs=[tx],
+                header_verify=Header(
+                    requests_hash=Requests(
+                        *[
+                            request.with_source_address(contract_address)
+                            for request in sorted(
+                                requests, key=lambda r: r.type
+                            )
+                        ],
+                    )
+                ),
+            )
+        ],
     )
 
 
@@ -383,6 +478,7 @@ def invalid_requests_block_combinations(
     return func
 
 
+@pytest.mark.skip(reason="Run On Hedera: EIP7685 is not supported")
 @pytest.mark.parametrize_by_fork(
     "requests,block_body_override_requests,exception",
     invalid_requests_block_combinations(correct_requests_hash_in_header=False),
@@ -410,6 +506,7 @@ def test_invalid_multi_type_requests(
     )
 
 
+@pytest.mark.skip(reason="Run On Hedera: EIP7685 is not supported")
 @pytest.mark.parametrize_by_fork(
     "requests,block_body_override_requests,exception",
     invalid_requests_block_combinations(correct_requests_hash_in_header=True),

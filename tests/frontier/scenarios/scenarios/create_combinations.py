@@ -19,11 +19,13 @@ from ..common import Scenario, ScenarioEnvironment, ScenarioGeneratorInput
 class AddressBalance:
     """Definition of values we use to put in contract balances and call."""
 
-    root_call_value = 1
-    create_value = 3
-    call_value = 5
-    root_contract_balance = 100
-    scenario_contract_balance = 200
+    # Run On Hedera: values scaled by 1 tinybar (10_000_000_000 wei) since
+    # Hedera rejects any nonzero value below that
+    root_call_value = 1 * 10_000_000_000
+    create_value = 3 * 10_000_000_000
+    call_value = 5 * 10_000_000_000
+    root_contract_balance = 100 * 10_000_000_000
+    scenario_contract_balance = 200 * 10_000_000_000
 
 
 def scenarios_create_combinations(
@@ -61,13 +63,21 @@ def scenarios_create_combinations(
 
         # the code result in init code will be actually code of a deployed
         # contract
+        # Run On Hedera: value scaled by 1 tinybar (10_000_000_000 wei) since
+        # Hedera rejects any nonzero value below that
         scenario_contract = scenario_input.pre.deploy_contract(
-            balance=3,
+            balance=3 * 10_000_000_000,
             code=Op.EXTCODECOPY(
                 operation_contract, 0, 0, Op.EXTCODESIZE(operation_contract)
             )
             + Op.MSTORE(
-                0, create(3, 0, Op.EXTCODESIZE(operation_contract), *salt)
+                0,
+                create(
+                    3 * 10_000_000_000,
+                    0,
+                    Op.EXTCODESIZE(operation_contract),
+                    *salt,
+                ),
             )
             + Op.EXTCODECOPY(Op.MLOAD(0), 0, 0, 32)
             + Op.RETURN(0, 32),
@@ -84,8 +94,8 @@ def scenarios_create_combinations(
             # Define address on which behalf program is executed
             code_address=created_address,
             code_caller=scenario_contract,
-            selfbalance=3,
-            call_value=3,
+            selfbalance=3 * 10_000_000_000,
+            call_value=3 * 10_000_000_000,
             call_dataload_0=0,
             call_datasize=0,
         )

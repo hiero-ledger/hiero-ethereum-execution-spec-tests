@@ -85,6 +85,21 @@ class AuthorizationTupleGeneric(
 
     magic: ClassVar[int] = 0x05
 
+    @model_validator(mode="before")
+    @classmethod
+    def drop_hedera_duplicate_y_parity(cls, data: Any) -> Any:
+        """
+        # TODO Fix On Hedera: the relay duplicates `yParity` as snake_case
+        `y_parity` in authorizationList entries, which is otherwise
+        rejected as an unexpected extra field.
+        Most likely duplication happening because of MirrorNode returning `y_parity`
+        and Relay is not dropping it after formatting
+        """
+        if isinstance(data, dict) and "y_parity" in data:
+            data = dict(data)
+            del data["y_parity"]
+        return data
+
     rlp_fields: ClassVar[List[str]] = [
         "chain_id",
         "address",

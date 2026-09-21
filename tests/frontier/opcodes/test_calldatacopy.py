@@ -194,7 +194,8 @@ def test_calldatacopy(
         protected=fork.supports_protected_txs(),
         sender=pre.fund_eoa(),
         to=to,
-        value=0x01,
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
+        value=0x2540BE400,
     )
     if to_address_storage:
         post = {code_address: code_address_storage, to: to_address_storage}

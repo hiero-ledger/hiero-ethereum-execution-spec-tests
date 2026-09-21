@@ -1189,19 +1189,10 @@ class Alloc(SharedAlloc):
         )
         for tx in self._pending_txs:
             if tx.value is None:
-                # WARN: This currently fails if there's an account with
-                # `pre.fund_eoa()` that never sends a transaction during test.
-                if tx.to not in sender_balances:
-                    error_message = (
-                        "Sender balance must be set before sending:"
-                        f"\nTransaction: {tx.model_dump_json(indent=2)}"
-                    )
-                    if tx.metadata is not None:
-                        metadata_json = tx.metadata.model_dump_json(indent=2)
-                        error_message += f"\nMetadata: {metadata_json}"
-                    logger.error(error_message)
-                    raise ValueError(error_message)
-                sender_balance = sender_balances[tx.to]
+                # An EOA funded via `pre.fund_eoa()` with no explicit
+                # amount that never sends a transaction of its own has no
+                # entry in `sender_balances` and needs no funding.
+                sender_balance = sender_balances.get(tx.to, 0)
                 bal_eth = sender_balance / 10**18
                 logger.info(
                     f"Deferred EOA balance for {tx.to} set to "
