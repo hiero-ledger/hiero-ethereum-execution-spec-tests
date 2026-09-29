@@ -1413,7 +1413,7 @@ def test_pointer_reentry(state_test: StateTestFiller, pre: Alloc) -> None:
 
     sender = pre.fund_eoa()
     # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
-    pointer_b = pre.fund_eoa(amount=100_000_000_000)
+    pointer_b = pre.fund_eoa(amount=10_000_000_000_000)
     proxy = pre.deploy_contract(
         code=Op.MSTORE(arg_contract, Op.CALLDATALOAD(arg_contract))
         + Op.MSTORE(arg_action, Op.CALLDATALOAD(arg_action))
@@ -1460,8 +1460,7 @@ def test_pointer_reentry(state_test: StateTestFiller, pre: Alloc) -> None:
                         Op.ADDRESS(),
                     )
                     + Op.SSTORE(
-                        # Run On Hedera: 100_000_000_000 wei = 10 tinybar
-                        storage_pointer_b.store_next(10, "selfbalance"),
+                        storage_pointer_b.store_next(1000, "selfbalance"),
                         Op.SELFBALANCE(),
                     )
                     + Op.SSTORE(
@@ -1510,8 +1509,7 @@ def test_pointer_reentry(state_test: StateTestFiller, pre: Alloc) -> None:
                     )
                     + Op.SSTORE(slot_reentry_address, Op.ADDRESS())
                     + Op.SSTORE(
-                        # Run On Hedera: SELFBALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
-                        storage_b.store_next(1, "selfbalance"),
+                        storage_b.store_next(100, "selfbalance"),
                         Op.SELFBALANCE(),
                     )
                     + Op.SSTORE(
@@ -1537,7 +1535,8 @@ def test_pointer_reentry(state_test: StateTestFiller, pre: Alloc) -> None:
             default_action=None,
         )
     )
-    contract_b = pre.deploy_contract(balance=100, code=contract_code)
+    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
+    contract_b = pre.deploy_contract(balance=1000_000_000_000, code=contract_code)
     codesize = len(contract_code)
     designation = Spec.delegation_designation(contract_b)
     storage_b[slot_reentry_address] = contract_b

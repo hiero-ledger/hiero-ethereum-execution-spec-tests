@@ -3361,6 +3361,10 @@ def test_set_code_to_system_contract(
             request.fee = request.get_fee(0)
         caller_payload = request.calldata
         call_value = request.value
+        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
+        # since Hedera rejects any nonzero value below that
+        if call_value < 10_000_000_000:
+            call_value = 10_000_000_000
     else:
         match system_contract:
             case Address(
