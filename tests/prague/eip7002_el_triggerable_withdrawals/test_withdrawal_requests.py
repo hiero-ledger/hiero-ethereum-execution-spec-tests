@@ -503,7 +503,6 @@ pytestmark = pytest.mark.valid_from("Prague")
         ),
     ],
 )
-@pytest.mark.skip(reason="Run On Hedera: EIP7002 is not supported")
 def test_withdrawal_requests(
     blockchain_test: BlockchainTestFiller,
     blocks: List[Block],
@@ -677,7 +676,6 @@ def test_withdrawal_requests(
     ],
 )
 @pytest.mark.exception_test
-@pytest.mark.skip(reason="Run On Hedera: EIP7002 is not supported")
 def test_withdrawal_requests_negative(
     blockchain_test: BlockchainTestFiller,
     override_blocks: List[Block],

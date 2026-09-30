@@ -21,7 +21,6 @@ REFERENCE_SPEC_VERSION = ref_spec_2935.version
 pytestmark = [pytest.mark.valid_at("Prague"), pytest.mark.mainnet]
 
 
-@pytest.mark.skip(reason="Run On Hedera: EIP2935 is not supported")
 def test_eip_2935(
     blockchain_test: BlockchainTestFiller,
     pre: Alloc,

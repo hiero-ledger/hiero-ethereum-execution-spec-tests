@@ -41,7 +41,6 @@ pytestmark = [pytest.mark.valid_at("Prague"), pytest.mark.mainnet]
         ),
     ],
 )
-@pytest.mark.skip(reason="Run On Hedera: EIP7002 is not supported")
 def test_eip_7002(
     blockchain_test: BlockchainTestFiller,
     pre: Alloc,
