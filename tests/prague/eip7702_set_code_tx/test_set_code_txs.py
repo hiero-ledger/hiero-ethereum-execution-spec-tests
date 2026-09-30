@@ -1702,13 +1702,17 @@ def test_ext_code_on_self_delegating_set_code(
     # Pin gas so BALANCE(auth_signer) is deterministic when the authority
     # is also the sender (up-front max-fee hold).
     gas_limit = 1_000_000
-    max_fee_per_gas = 7
+    # Run On Hedera: increase 'max_fee_per_gas'
+    # because of "Gas price '7' is below configured minimum gas price '710000000000'"
+    max_fee_per_gas = 710_000_000_000
 
     if self_sponsored:
         auth_balance = 10**18
         auth_signer = pre.fund_eoa(auth_balance)
         sender = auth_signer
         expected_ext_balance = auth_balance - gas_limit * max_fee_per_gas
+        # Run On Hedera: BALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+        expected_ext_balance = expected_ext_balance // 10_000_000_000
     else:
         assert balance is not None
         auth_balance = balance
@@ -1803,11 +1807,14 @@ def test_ext_code_on_chain_delegating_set_code(
     # Pin gas so BALANCE(auth_signer_1) is deterministic when that authority
     # is also the sender (up-front max-fee hold).
     gas_limit = 2_000_000
-    max_fee_per_gas = 7
+    # Run On Hedera: increase 'max_fee_per_gas'
+    # because of "Gas price '7' is below configured minimum gas price '710000000000'"
+    max_fee_per_gas = 710_000_000_000
 
     auth_signer_2_balance = 0
     if self_sponsored:
-        auth_signer_1_balance = 10**18
+        # Run On Hedera: increase funding because of "Insufficient funds for transfer"
+        auth_signer_1_balance = 20**18
         auth_signer_1 = pre.fund_eoa(auth_signer_1_balance)
         sender = auth_signer_1
         expected_ext_balance_1 = (
