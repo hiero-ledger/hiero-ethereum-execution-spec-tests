@@ -32,7 +32,6 @@ REFERENCE_SPEC_VERSION = ref_spec_7002.version
     expected_deploy_address=WithdrawalRequest.system_contract_address,
     fail_on_empty_code=True,
 )
-@pytest.mark.skip(reason="Run On Hedera: EIP7002 is not supported")
 def test_system_contract_deployment(
     *,
     fork: TransitionFork,

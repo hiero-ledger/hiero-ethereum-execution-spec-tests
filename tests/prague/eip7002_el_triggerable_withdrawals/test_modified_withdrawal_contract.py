@@ -82,7 +82,6 @@ def withdrawal_list_with_custom_fee(n: int) -> List[WithdrawalRequest]:  # noqa:
         ),
     ],
 )
-@pytest.mark.skip(reason="Run On Hedera: EIP7002 is not supported")
 def test_extra_withdrawals(
     blockchain_test: BlockchainTestFiller,
     pre: Alloc,
