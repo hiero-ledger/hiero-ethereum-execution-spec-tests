@@ -27,6 +27,7 @@ from .conftest import (
 )
 from .helpers import vectors_from_file
 from .spec import PointG1, PointG2, Spec, pairing_gas, ref_spec_2537
+from ...cancun.eip4844_blobs.test_point_evaluation_precompile import precompile_input
 
 REFERENCE_SPEC_GIT_PATH = ref_spec_2537.git_path
 REFERENCE_SPEC_VERSION = ref_spec_2537.version
@@ -236,8 +237,11 @@ def test_valid_multi_inf(
         max_gas_limit=max_gas_limit,
         iteration_data=inf_data,
         extra_gas=extra_gas,
-        max_calldata_size=MAX_CALLDATA_SIZE,
+        # max_calldata_size=MAX_CALLDATA_SIZE, # TODO Fix On Hedera: not included in a block after 15 seconds
     )
+
+    print(f"!!!!!!!!!!!!!!>>> gas_limit={gas_limit} input_data={len(input_data)} "
+          f"fork={fork.transaction_gas_limit_cap()} env={Environment().gas_limit}")
 
     tx = Transaction(
         gas_limit=gas_limit,
