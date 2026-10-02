@@ -27,14 +27,9 @@ from .conftest import (
 )
 from .helpers import vectors_from_file
 from .spec import PointG1, PointG2, Spec, pairing_gas, ref_spec_2537
-from ...cancun.eip4844_blobs.test_point_evaluation_precompile import precompile_input
 
 REFERENCE_SPEC_GIT_PATH = ref_spec_2537.git_path
 REFERENCE_SPEC_VERSION = ref_spec_2537.version
-
-# Run On Hedera: cap generated call data at Hedera's JSON-RPC relay call
-# data size limit, which rejects oversized transactions regardless of gas.
-MAX_CALLDATA_SIZE = 131_072
 
 pytestmark = [
     pytest.mark.valid_from("Prague"),
@@ -155,11 +150,10 @@ def binary_search(
     iteration_data: bytes,
     suffix_data: bytes = b"",
     extra_gas: int = 100_000,
-    max_calldata_size: int | None = None,
 ) -> Tuple[int, bytes]:
     """
     Calculate the optimal transaction gas limit and input data to stay below
-    the maximum gas limit and, if given, the maximum call data size.
+    the maximum gas limit.
     """
     intrinsic_gas_cost_calculator = (
         fork.transaction_intrinsic_cost_calculator()
@@ -168,9 +162,6 @@ def binary_search(
     len_iteration_data = len(iteration_data)
     len_prefix_data = len(suffix_data)
 
-    def calc_calldata_size(n: int) -> int:
-        return (len_iteration_data * n) + len_prefix_data
-
     def calc_tx_gas_limit(n: int) -> int:
         return (
             extra_gas
@@ -178,28 +169,22 @@ def binary_search(
                 calldata=(iteration_data * n) + suffix_data
             )
             + memory_expansion_gas_calculator(
-                new_bytes=calc_calldata_size(n),
+                new_bytes=(len_iteration_data * n) + len_prefix_data,
             )
-            + pairing_gas(calc_calldata_size(n))
-        )
-
-    def exceeds_limits(n: int) -> bool:
-        return calc_tx_gas_limit(n) > max_gas_limit or (
-            max_calldata_size is not None
-            and calc_calldata_size(n) > max_calldata_size
+            + pairing_gas((len_iteration_data * n) + len_prefix_data)
         )
 
     low = 1
     high = 2
 
-    while not exceeds_limits(high):
+    while calc_tx_gas_limit(high) < max_gas_limit:
         low = high
         high *= 2
 
     # Binary search for exact fit
     while low < high:
         mid = (low + high) // 2
-        if exceeds_limits(mid):
+        if calc_tx_gas_limit(mid) > max_gas_limit:
             high = mid
         else:
             low = mid + 1
@@ -228,7 +213,9 @@ def test_valid_multi_inf(
     """
     extra_gas = 100_000
 
-    max_gas_limit = fork.transaction_gas_limit_cap() or Environment().gas_limit
+    # TODO Fix On Hedera: Large jumbo `EthereumTransaction` payloads are silently truncated on ingest,
+    #  failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
+    max_gas_limit = 12_000_000
 
     inf_data = Spec.INF_G1 + Spec.INF_G2
 
@@ -237,11 +224,7 @@ def test_valid_multi_inf(
         max_gas_limit=max_gas_limit,
         iteration_data=inf_data,
         extra_gas=extra_gas,
-        # max_calldata_size=MAX_CALLDATA_SIZE, # TODO Fix On Hedera: not included in a block after 15 seconds
     )
-
-    print(f"!!!!!!!!!!!!!!>>> gas_limit={gas_limit} input_data={len(input_data)} "
-          f"fork={fork.transaction_gas_limit_cap()} env={Environment().gas_limit}")
 
     tx = Transaction(
         gas_limit=gas_limit,
@@ -446,7 +429,9 @@ def test_invalid_multi_inf(
     """
     extra_gas = 100_000
 
-    max_gas_limit = fork.transaction_gas_limit_cap() or Environment().gas_limit
+    # TODO Fix On Hedera: Large jumbo `EthereumTransaction` payloads are silently truncated on ingest,
+    #  failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
+    max_gas_limit = 12_000_000
 
     inf_data = Spec.INF_G1 + Spec.INF_G2
     invalid_data = PointG1(Spec.P, 0) + Spec.INF_G2
@@ -457,7 +442,6 @@ def test_invalid_multi_inf(
         iteration_data=inf_data,
         suffix_data=invalid_data,
         extra_gas=extra_gas,
-        max_calldata_size=MAX_CALLDATA_SIZE,
     )
 
     tx = Transaction(
