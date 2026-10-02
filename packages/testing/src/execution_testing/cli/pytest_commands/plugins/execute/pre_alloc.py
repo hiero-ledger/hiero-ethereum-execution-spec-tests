@@ -46,6 +46,7 @@ from execution_testing.vm import Bytecode, Op
 
 from ..shared.address_stubs import AddressStubs
 from ..shared.execute_fill import stub_eoas_key
+from ..shared.live_client_flags import round_up_to_tinybar
 from ..shared.pre_alloc import Alloc as SharedAlloc
 from ..shared.pre_alloc import AllocFlags
 from .contracts import (
@@ -682,6 +683,14 @@ class Alloc(SharedAlloc):
         """
         assert nonce is None, "nonce parameter is not supported for execute"
         assert code is None, "code parameter is not supported for execute"
+        if amount is not None:
+            # Run On Hedera: a nonzero value transfer below 1 tinybar is
+            # rejected by the node, so any requested amount is rounded up
+            # to the nearest whole tinybar. Tests that only need a
+            # nonzero balance (e.g. marking an authority as "existing")
+            # can keep passing a tiny wei amount; this is a no-op for
+            # amounts already tinybar-aligned (e.g. whole-ETH amounts).
+            amount = round_up_to_tinybar(Number(amount))
         eoa = next(self._eoa_iterator)
         eoa.label = label
         amount_str = (
@@ -1189,6 +1198,7 @@ class Alloc(SharedAlloc):
         )
         for tx in self._pending_txs:
             if tx.value is None:
+                # Fixed In Test:
                 # An EOA funded via `pre.fund_eoa()` with no explicit
                 # amount that never sends a transaction of its own has no
                 # entry in `sender_balances` and needs no funding.

@@ -1363,15 +1363,11 @@ def test_ext_code_on_set_code(
             set_code_to_address = pre.fund_eoa(0)
         case AddressType.EOA:
             set_code = Bytecode()
-            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-            # since Hedera rejects any nonzero value below that
-            set_code_to_address = pre.fund_eoa(10_000_000_000)
+            set_code_to_address = pre.fund_eoa(1)
         case AddressType.EOA_WITH_SET_CODE:
             set_code_account = pre.fund_eoa(0)
             set_code = Spec.delegation_designation(set_code_account)
-            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-            # since Hedera rejects any nonzero value below that
-            set_code_to_address = pre.fund_eoa(10_000_000_000, delegation=set_code_account)
+            set_code_to_address = pre.fund_eoa(1, delegation=set_code_account)
         case AddressType.CONTRACT:
             set_code = Op.STOP
             set_code_to_address = pre.deploy_contract(set_code)
