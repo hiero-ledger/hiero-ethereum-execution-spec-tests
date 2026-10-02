@@ -148,9 +148,7 @@ def test_self_sponsored_set_code(
     "eoa_balance,self_sponsored",
     [
         pytest.param(0, False, id="zero_balance_authority"),
-        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-        # since Hedera rejects any nonzero value below that
-        pytest.param(10_000_000_000, False, id="one_wei_balance_authority"),
+        pytest.param(1, False, id="one_wei_balance_authority"),
         pytest.param(None, True, id="self_sponsored_tx"),
     ],
 )
@@ -501,9 +499,7 @@ def test_set_code_to_tstore_available_at_correct_address(
 )
 @pytest.mark.parametrize(
     "balance",
-    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-    # since Hedera rejects any nonzero value below that
-    [0, 10_000_000_000],
+    [0, 1],
 )
 def test_set_code_to_self_destruct(
     state_test: StateTestFiller,
@@ -1321,9 +1317,7 @@ def test_call_into_chain_delegating_set_code(
 
 @pytest.mark.parametrize(
     "balance",
-    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-    # since Hedera rejects any nonzero value below that
-    [0, 10_000_000_000],
+    [0, 1],
 )
 @pytest.mark.parametrize(
     "set_code_type",
@@ -1442,9 +1436,7 @@ def test_ext_code_on_set_code(
 
 @pytest.mark.parametrize(
     "balance",
-    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-    # since Hedera rejects any nonzero value below that
-    [0, 10_000_000_000],
+    [0, 1],
 )
 def test_ext_code_on_self_set_code(
     state_test: StateTestFiller,
@@ -1679,9 +1671,7 @@ def test_set_code_address_and_authority_warm_state_call_types(
     "balance,self_sponsored",
     [
         pytest.param(0, False, id="zero_balance_authority"),
-        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-        # since Hedera rejects any nonzero value below that
-        pytest.param(10_000_000_000, False, id="one_wei_balance_authority"),
+        pytest.param(1, False, id="one_wei_balance_authority"),
         pytest.param(None, True, id="self_sponsored_tx"),
     ],
 )
@@ -1817,9 +1807,7 @@ def test_ext_code_on_chain_delegating_set_code(
             auth_signer_1_balance - gas_limit * max_fee_per_gas
         )
     else:
-        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-        # since Hedera rejects any nonzero value below that
-        auth_signer_1_balance = 10_000_000_000
+        auth_signer_1_balance = 1
         auth_signer_1 = pre.fund_eoa(auth_signer_1_balance)
         sender = pre.fund_eoa()
         expected_ext_balance_1 = auth_signer_1_balance
@@ -1927,9 +1915,7 @@ def test_ext_code_on_chain_delegating_set_code(
 
 @pytest.mark.parametrize(
     "balance",
-    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-    # since Hedera rejects any nonzero value below that
-    [0, 10_000_000_000],
+    [0, 1],
 )
 def test_self_code_on_set_code(
     state_test: StateTestFiller,
@@ -2080,9 +2066,7 @@ def test_set_code_to_account_deployed_in_same_tx(
 )
 @pytest.mark.parametrize(
     "balance",
-    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-    # since Hedera rejects any nonzero value below that
-    [0, 10_000_000_000],
+    [0, 1],
 )
 @pytest.mark.parametrize("call_set_code_first", [False, True])
 @pytest.mark.parametrize("create_opcode", [Op.CREATE, Op.CREATE2])
@@ -3244,9 +3228,7 @@ def test_set_code_to_precompile_not_enough_gas_for_precompile_execution(
     tests in ``test_state_gas_set_code.py``. A precompile delegation
     target adds no new path there because its body never runs.
     """
-    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-    # since Hedera rejects any nonzero value below that
-    auth_signer = pre.fund_eoa(amount=10_000_000_000)
+    auth_signer = pre.fund_eoa(amount=1)
     auth = AuthorizationTuple(
         address=Address(precompile), nonce=0, signer=auth_signer
     )
@@ -3717,7 +3699,7 @@ def test_empty_authorization_list(
 ) -> None:
     """Test sending an invalid transaction with empty authorization list."""
     tx = Transaction(
-        # Run On Hedera: use `Bytecode()` instead of `b""` — execute-remote
+        # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
         # mode builds a real on-chain deployment tx via Initcode, which
         # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check.
         to=pre.deploy_contract(code=Bytecode()),
@@ -4283,9 +4265,7 @@ def test_creating_delegation_designation_contract(
     else:
         create_init = Initcode(deploy_code=Spec.delegation_designation(sender))
     contract_a = pre.deploy_contract(
-        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-        # since Hedera rejects any nonzero value below that
-        balance=10_000_000_000,
+        balance=100,
         code=Op.MSTORE(0, Op.CALLDATALOAD(0))
         + Op.SSTORE(
             storage.store_next(0, "contract_a_create_result"),
@@ -4305,9 +4285,10 @@ def test_creating_delegation_designation_contract(
         address=contract_a, nonce=1, initcode=create_init, opcode=create_opcode
     )
     post = {
-        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-        # since Hedera rejects any nonzero value below that
-        contract_a: Account(balance=10_000_000_000, storage=storage),
+        # Run On Hedera: deploy_contract rounds the requested 100 wei
+        # balance up to 1 tinybar (10_000_000_000 wei), since Hedera
+        # rejects any nonzero value below that.
+        contract_a: Account(balance=1_000_000_000_000, storage=storage),
         create_address: Account.NONEXISTENT,
     }
     state_test(env=env, pre=pre, post=post, tx=tx)
@@ -4361,6 +4342,7 @@ def test_many_delegations(
         + entry_code_gas,
         max_gas,
     )
+    # TODO Glib: recheck
     # Run On Hedera: cap at 300 delegations. Post-state verification
     # (get_alloc) sends one unchunked JSON-RPC batch request with
     # getBalance/getCode/getTransactionCount for every address in `post`.

@@ -30,19 +30,21 @@ logger = get_logger(__name__)
 # between the two; the bump keeps txs landing without per-tx requeries).
 FEE_BUMP_MULTIPLIER = 1.5
 
-# Run On Hedera: 1 tinybar. Hedera only tracks whole tinybars, so a
-# multiplied fee value that isn't tinybar-aligned makes
-# `gas_price * gas_limit` land short of a whole tinybar too (for any
-# gas_limit). Callers funding a sender based on this exact figure fund
-# with zero margin, so this misalignment alone can tip a transaction
-# into "insufficient funds" even though the wei math looks exact.
-WEI_TO_TINYBAR = 10_000_000_000
-
 
 # Run On Hedera: Round a wei value up to the nearest whole tinybar.
 def round_up_to_tinybar(value: int) -> int:
     """Round a wei value up to the nearest whole tinybar."""
-    return -(-value // WEI_TO_TINYBAR) * WEI_TO_TINYBAR
+    # Run On Hedera: 1 tinybar. Hedera only tracks whole tinybars, so a
+    # multiplied fee value that isn't tinybar-aligned makes
+    # `gas_price * gas_limit` land short of a whole tinybar too (for any
+    # gas_limit). Callers funding a sender based on this exact figure fund
+    # with zero margin, so this misalignment alone can tip a transaction
+    # into "insufficient funds" even though the wei math looks exact.
+    WEI_TO_TINYBAR = 10_000_000_000
+    retval = -(-value // WEI_TO_TINYBAR) * WEI_TO_TINYBAR
+    if value != retval:
+        print(f">>>Run On Hedera: round {value} to {retval}")
+    return retval
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

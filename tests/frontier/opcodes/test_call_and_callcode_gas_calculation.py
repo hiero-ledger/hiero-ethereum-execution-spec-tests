@@ -160,8 +160,7 @@ def sender(pre: Alloc) -> EOA:
 @pytest.fixture
 def callee_address(pre: Alloc, callee_code: Bytecode) -> Address:
     """Address of the callee."""
-    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
-    return pre.deploy_contract(callee_code, balance=0x2540BE400)
+    return pre.deploy_contract(callee_code, balance=0x03)
 
 
 @pytest.fixture
@@ -195,8 +194,7 @@ def caller_address(pre: Alloc, caller_code: Bytecode) -> Address:
       PUSH1 0x00
       SSTORE.
     """
-    # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
-    return pre.deploy_contract(caller_code, balance=0x2540BE400)
+    return pre.deploy_contract(caller_code, balance=0x03)
 
 
 @pytest.fixture
