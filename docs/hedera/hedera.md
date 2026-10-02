@@ -1,5 +1,6 @@
 # Changelog
 
+- Unsupported tests are skipped at `packages/testing/src/execution_testing/cli/pytest_commands/pytest_ini_files/pytest-execute.ini`
 - `# Run On Hedera:` comments added where the 'static change' is done on test cases
 - `# TODO Fix On Hedera:` comments added where fixes are required on Hedera for the core spec test framework to work
 - `# Fixed In Test:` comments added where a genuine test bug (not a Hedera behavior difference) was found and fixed while running against Hedera
@@ -20,6 +21,7 @@
    **Root cause:** The local Hedera node's JSON-RPC relay doesn't handle multiple same-sender transactions submitted in one JSON-RPC batch call reliably — it races on nonce sequencing when 2+ transactions from the same account arrive together, causing "nonce too low"/"nonce too high" depending on timing. Sending them one at a time (waiting for each to land in a block before sending the next) sidesteps the race entirely.
 
    Example:
+    1. frontier
    ```bash
    uv run execute remote -rA --verbose --fork=Prague \
        --rpc-endpoint=http://localhost:37546/ \
@@ -31,6 +33,17 @@
        --env-gas-limit=15000000 \
        "tests/frontier/create/test_create_deposit_oog.py::test_create_deposit_oog[fork_Prague-create_opcode_CREATE2-state_test-enough_gas_True]"
    ```
+   2. prague
+    ```bash
+    uv run execute remote -rA -v --fork=Prague \                                           
+        --rpc-endpoint=http://localhost:37546/ \
+        --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
+        --rpc-chain-id=298 \
+        --seed-account-sweep-amount='1_000_000 ether' \
+        --default-max-fee-per-blob-gas=710_000_000_000 \
+        --tx-wait-timeout=15 \
+        "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption"
+    ```
 
    Workaround: add `--max-tx-per-batch=1`.
 
