@@ -46,7 +46,6 @@ from execution_testing.vm import Bytecode, Op
 
 from ..shared.address_stubs import AddressStubs
 from ..shared.execute_fill import stub_eoas_key
-from ..shared.live_client_flags import round_up_to_tinybar
 from ..shared.pre_alloc import Alloc as SharedAlloc
 from ..shared.pre_alloc import AllocFlags
 from .contracts import (
@@ -55,6 +54,19 @@ from .contracts import (
 )
 
 logger = get_logger(__name__)
+
+
+# Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by
+# the node. Tests that only need a small nonzero placeholder (e.g. "1",
+# "100") express it as a tinybar count rather than wei, so scale it up by
+# the wei-per-tinybar rate
+def scale_sub_tinybar_amount(value: int) -> int:
+    WEI_TO_TINYBAR = 10_000_000_000
+    """Scale a sub-tinybar wei value up by treating it as a tinybar count."""
+    if 0 < value < WEI_TO_TINYBAR:
+        print(f">>>Run On Hedera: scale {value} to {value * WEI_TO_TINYBAR}")
+        return value * WEI_TO_TINYBAR
+    return value
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -548,6 +560,8 @@ class Alloc(SharedAlloc):
         if storage is None:
             storage = {}
         assert address is None, "address parameter is not supported"
+        # Run On Hedera: scale it up by the wei-per-tinybar rate
+        balance = scale_sub_tinybar_amount(Number(balance))
         fork = self._fork.fork_at(
             block_number=self._block_number, timestamp=self._timestamp
         )
@@ -684,13 +698,8 @@ class Alloc(SharedAlloc):
         assert nonce is None, "nonce parameter is not supported for execute"
         assert code is None, "code parameter is not supported for execute"
         if amount is not None:
-            # Run On Hedera: a nonzero value transfer below 1 tinybar is
-            # rejected by the node, so any requested amount is rounded up
-            # to the nearest whole tinybar. Tests that only need a
-            # nonzero balance (e.g. marking an authority as "existing")
-            # can keep passing a tiny wei amount; this is a no-op for
-            # amounts already tinybar-aligned (e.g. whole-ETH amounts).
-            amount = round_up_to_tinybar(Number(amount))
+            # Run On Hedera: scale it up by the wei-per-tinybar rate
+            amount = scale_sub_tinybar_amount(Number(amount))
         eoa = next(self._eoa_iterator)
         eoa.label = label
         amount_str = (

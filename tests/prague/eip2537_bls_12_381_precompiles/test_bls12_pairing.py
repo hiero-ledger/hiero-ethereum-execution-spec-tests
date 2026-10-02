@@ -213,7 +213,8 @@ def test_valid_multi_inf(
     """
     extra_gas = 100_000
 
-    # TODO Fix On Hedera: Large jumbo `EthereumTransaction` payloads are silently truncated on ingest,
+    # TODO Fix On Hedera: ParseException while parsing protobuf
+    #  Large jumbo `EthereumTransaction` payloads are silently truncated on ingest,
     #  failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
     max_gas_limit = 12_000_000
 
