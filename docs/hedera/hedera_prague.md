@@ -2806,10 +2806,9 @@ PASSED tests/prague/eip2537_bls_12_381_precompiles/test_eip_mainnet.py::test_eip
 PASSED tests/prague/eip2537_bls_12_381_precompiles/test_eip_mainnet.py::test_eip_2537[fork_Prague-state_test-PAIRING]
 PASSED tests/prague/eip2537_bls_12_381_precompiles/test_eip_mainnet.py::test_eip_2537[fork_Prague-state_test-fp_map_to_inf0]
 PASSED tests/prague/eip2537_bls_12_381_precompiles/test_eip_mainnet.py::test_eip_2537[fork_Prague-state_test-fp_map_to_inf1]
-SKIPPED [1] tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py:98: got empty parameter set for (input_data, vector_gas_value)
-SKIPPED [1] tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py:262: Run On Hedera: requires ~60kk gas, that is way more than Hedera (15kk) and GETH allow. Same failure on Hedera and GETH
-SKIPPED [1] tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py:412: Run On Hedera: requires ~120kk gas, that is way more than Hedera (15kk) and GETH allow. Same failure on Hedera and GETH
-=========================================================================== 976 passed, 3 skipped, 1 warning in 7117.78s (1:58:37) ============================================================================
+PASSED tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py::test_valid_gas_g1msm[fork_Prague-full_discount_table-state_test-precompile_address_12--exact_gas]
+PASSED tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py::test_valid_gas_g2msm[fork_Prague-full_discount_table-state_test-precompile_address_14--exact_gas]
+=========================================================================== 978 passed, 1 skipped, 1 warning in 7117.78s (1:58:37) ============================================================================
 ```
 
 #### ✅(EIP2935 is not supported on Hedera) Run Results `tests/prague/eip2935_historical_block_hashes_from_state`
