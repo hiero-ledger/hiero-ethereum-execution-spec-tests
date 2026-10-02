@@ -40,7 +40,7 @@ WEI_TO_TINYBAR = 10_000_000_000
 
 
 # Run On Hedera: Round a wei value up to the nearest whole tinybar.
-def _round_up_to_tinybar(value: int) -> int:
+def round_up_to_tinybar(value: int) -> int:
     """Round a wei value up to the nearest whole tinybar."""
     return -(-value // WEI_TO_TINYBAR) * WEI_TO_TINYBAR
 
@@ -288,7 +288,7 @@ def max_priority_fee_per_gas(
     if max_priority_fee_per_gas is None:
         network_max_priority_fee = eth_rpc.max_priority_fee_per_gas()
         # Run On Hedera: Round a wei value up to the nearest whole tinybar.
-        max_priority_fee_per_gas = _round_up_to_tinybar(
+        max_priority_fee_per_gas = round_up_to_tinybar(
             int(network_max_priority_fee * FEE_BUMP_MULTIPLIER)
         )
     return max_priority_fee_per_gas
@@ -305,7 +305,7 @@ def max_fee_per_gas(
     if max_fee_per_gas is None:
         network_gas_price = eth_rpc.gas_price()
         # Run On Hedera: Round a wei value up to the nearest whole tinybar.
-        max_fee_per_gas = _round_up_to_tinybar(
+        max_fee_per_gas = round_up_to_tinybar(
             int(network_gas_price * FEE_BUMP_MULTIPLIER)
         )
     if max_priority_fee_per_gas > max_fee_per_gas:
@@ -324,7 +324,7 @@ def max_fee_per_blob_gas(
     if max_fee_per_blob_gas is None:
         network_blob_base_fee = eth_rpc.blob_base_fee()
         # Run On Hedera: Round a wei value up to the nearest whole tinybar.
-        max_fee_per_blob_gas = _round_up_to_tinybar(
+        max_fee_per_blob_gas = round_up_to_tinybar(
             int(network_blob_base_fee * FEE_BUMP_MULTIPLIER)
         )
     return max_fee_per_blob_gas

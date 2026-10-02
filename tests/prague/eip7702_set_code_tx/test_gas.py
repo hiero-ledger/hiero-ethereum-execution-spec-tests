@@ -484,9 +484,7 @@ def authorize_to_address(
         case AddressType.EMPTY_ACCOUNT:
             return pre.fund_eoa(0)
         case AddressType.EOA:
-            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-            # since Hedera rejects any nonzero value below that
-            return pre.fund_eoa(10_000_000_000)
+            return pre.fund_eoa(1)
         case AddressType.CONTRACT:
             return pre.deploy_contract(Op.STOP)
         case _:
