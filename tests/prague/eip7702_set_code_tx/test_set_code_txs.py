@@ -4342,17 +4342,14 @@ def test_many_delegations(
         + entry_code_gas,
         max_gas,
     )
-    # TODO Glib: recheck
-    # Run On Hedera: cap at 300 delegations. Post-state verification
-    # (get_alloc) sends one unchunked JSON-RPC batch request with
-    # getBalance/getCode/getTransactionCount for every address in `post`.
-    # At the full computed count (598 signers + entry contract) that
-    # batch body is ~232 KB; Hedera enforces a 131072-byte request-size
-    # limit, so the relay returns a malformed response (missing `id`)
-    # instead of a clean error. 300 addresses keep the batch at ~117 KB,
-    # comfortably under the limit.
+    # TODO Fix On Hedera: ParseException while parsing protobuf
+    # On 120M gas this will produce 4759 authorizations -> huge call_data ->
+    # Large jumbo `EthereumTransaction` payloads are silently truncated on ingest
+    # ```
+    # TransactionChecker - ParseException while parsing protobuf:
+    #    com.hedera.pbj.runtime.ParseException: java.nio.BufferUnderflowException
+    # ```
     delegation_count = min(delegation_count, 300)
-
 
     entry_address = pre.deploy_contract(entry_code)
 
