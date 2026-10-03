@@ -247,7 +247,7 @@ def test_transaction_validity_type_1_type_2(
 )
 @pytest.mark.parametrize(
     "ty",
-    [pytest.param(3, id="type_3", marks=pytest.mark.skip(reason="Run On Hedera: type 3 is not supported"))],
+    [pytest.param(3, id="type_3")],
 )
 def test_transaction_validity_type_3(
     state_test: StateTestFiller,
