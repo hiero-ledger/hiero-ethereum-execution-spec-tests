@@ -21,6 +21,8 @@ from execution_testing.test_types import (
     TransactionTestMetadata,
 )
 
+from ..shared.live_client_flags import round_up_to_tinybar
+
 logger = get_logger(__name__)
 
 
@@ -90,16 +92,9 @@ def sender_funding_transactions_gas_price(
     if gas_price is None:
         network_gas_price = eth_rpc.gas_price()
         gas_price = int(network_gas_price * 1.5)
-        # Run On Hedera: round up to the nearest whole tinybar
-        # (10_000_000_000 wei). Hedera only tracks whole tinybars, so an
-        # unaligned gas_price here means `gas_price * gas_limit` (the
-        # funding amount computed elsewhere, with zero safety margin)
-        # can land short of a whole tinybar and be rejected as
-        # insufficient funds. Rounding up guarantees alignment for any
-        # gas_limit, since a multiple of one tinybar times any integer
-        # is still a multiple of one tinybar.
-        tinybar = 10_000_000_000
-        gas_price = -(-gas_price // tinybar) * tinybar
+        # Run On Hedera: round up to the nearest whole tinybar. Hedera
+        # only tracks whole tinybars
+        gas_price = round_up_to_tinybar(gas_price)
         logger.info(
             f"Using calculated gas price: {gas_price / 10**9:.9f} Gwei "
             f"(1.5x network gas price: {network_gas_price / 10**9:.9f} Gwei, "

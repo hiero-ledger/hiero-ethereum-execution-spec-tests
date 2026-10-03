@@ -381,7 +381,7 @@ class BaseRPC:
 
         # Run On Hedera: Useful for viewing and debugging JSON-RPC Relay errors
         if 400 <= response.status_code < 600:
-            print(f"Relay: response.json: {response.json()}")
+            print(f"Run On Hedera: Relay: response.json: {response.json()}")
 
         response.raise_for_status()
 
@@ -412,7 +412,7 @@ class BaseRPC:
 
         # Run On Hedera: Useful for viewing and debugging JSON-RPC Relay errors
         if 400 <= response.status_code < 600:
-            print(f"Relay: response.json: {response.json()}")
+            print(f"Run On Hedera: Relay: response.json: {response.json()}")
 
         response.raise_for_status()
         response_json = response.json()
