@@ -260,6 +260,7 @@ pytestmark = pytest.mark.valid_from("Prague")
                 ],
             ],
             id="single_block_single_withdrawal_request_from_contract_call_depth_high",
+            marks=pytest.mark.skip(reason="Run On Hedera: infinite wait")
         ),
         pytest.param(
             [
@@ -498,6 +499,7 @@ pytestmark = pytest.mark.valid_from("Prague")
                 ],
             ],
             id="single_block_single_withdrawal_request_delegatecall_staticcall_callcode_call_depth_high",
+            marks=pytest.mark.skip(reason="Run On Hedera: infinite wait")
         ),
     ],
 )

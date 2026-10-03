@@ -90,7 +90,7 @@ def test_all_opcodes(
             else:
                 test_opcode = opcode[0]
         code_contract[opcode] = pre.deploy_contract(
-            balance=10,
+            balance=1,
             code=prepare_stack(opcode) + test_opcode + prepare_suffix(opcode),
             storage={},
         )

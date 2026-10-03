@@ -1266,7 +1266,8 @@ def test_selfdestruct_send_to_sender(
     )
     victim = pre.deploy_contract(code=victim_code, balance=originator_balance)
 
-    gas_price = 0xA
+    # Run On Hedera: Hedera's current network gas price (710 Gwei / 0xA54F4C3C00, via eth_gasPrice)
+    gas_price = 0xA54F4C3C00
     gas_limit = 100_000
     tx = Transaction(
         sender=alice,

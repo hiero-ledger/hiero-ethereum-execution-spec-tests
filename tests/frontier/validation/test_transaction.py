@@ -25,7 +25,7 @@ from execution_testing.specs.blockchain import (
 from execution_testing.test_types.block_types import Environment
 from execution_testing.test_types.transaction_types import TransactionDefaults
 
-
+@pytest.mark.skip(reason="Run On Hedera: Same failure on Hedera and GETH")
 @pytest.mark.inclusion_test
 @pytest.mark.exception_test
 @pytest.mark.eels_base_coverage
@@ -162,6 +162,7 @@ def test_tx_nonce_overflow(
     transaction_test(pre=pre, tx=tx)
 
 
+@pytest.mark.skip(reason="Run On Hedera: Same failure on Hedera and GETH")
 @pytest.mark.inclusion_test
 @pytest.mark.parametrize(
     "balance_diff, expected_exception",

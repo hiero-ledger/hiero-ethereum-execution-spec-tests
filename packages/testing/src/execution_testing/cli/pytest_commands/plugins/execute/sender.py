@@ -21,6 +21,8 @@ from execution_testing.test_types import (
     TransactionTestMetadata,
 )
 
+from ..shared.live_client_flags import round_up_to_tinybar
+
 logger = get_logger(__name__)
 
 
@@ -90,9 +92,13 @@ def sender_funding_transactions_gas_price(
     if gas_price is None:
         network_gas_price = eth_rpc.gas_price()
         gas_price = int(network_gas_price * 1.5)
+        # Run On Hedera: round up to the nearest whole tinybar. Hedera
+        # only tracks whole tinybars
+        gas_price = round_up_to_tinybar(gas_price)
         logger.info(
             f"Using calculated gas price: {gas_price / 10**9:.9f} Gwei "
-            f"(1.5x network gas price: {network_gas_price / 10**9:.9f} Gwei)"
+            f"(1.5x network gas price: {network_gas_price / 10**9:.9f} Gwei, "
+            "rounded up to the nearest tinybar)"
         )
     else:
         logger.info(f"Using specified gas price: {gas_price / 10**9:.9f} Gwei")

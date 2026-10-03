@@ -70,8 +70,11 @@ def test_coverage(
             to=address_to,
             protected=False,
             access_list=[],
-            max_fee_per_gas=10,
-            max_priority_fee_per_gas=5,
+            # Run On Hedera: change `max_fee_per_gas` and `max_priority_fee_per_gas` override with `ty=0x02`
+            # explicit ty=0x02 keeps this a type-2 tx (access_list=[] alone would deduce ty=1)
+            # without pinning max_fee_per_gas/max_priority_fee_per_gas, so set_gas_price() can fill them with the
+            # live network's real fee instead of a placeholder below Hedera's 1-tinybar (10_000_000_000 wei) minimum.
+            ty=0x02,
         )
     else:
         tx = Transaction(

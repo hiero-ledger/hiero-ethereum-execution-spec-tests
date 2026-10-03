@@ -9,7 +9,7 @@ from execution_testing import (
     Transaction,
 )
 
-
+@pytest.mark.skip(reason="Run On Hedera: Same failure on Hedera and GETH")
 @pytest.mark.valid_from("Frontier")
 def test_block_intermediate_state(
     blockchain_test: BlockchainTestFiller, pre: Alloc

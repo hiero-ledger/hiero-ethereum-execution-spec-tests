@@ -378,6 +378,11 @@ class BaseRPC:
         response = self._make_request(
             self.url, json_rpc_request.model_dump(), headers, timeout
         )
+
+        # Run On Hedera: Useful for viewing and debugging JSON-RPC Relay errors
+        if 400 <= response.status_code < 600:
+            print(f"Run On Hedera: Relay: response.json: {response.json()}")
+
         response.raise_for_status()
 
         return JSONRPCResponse.model_validate(response.json())
@@ -404,6 +409,11 @@ class BaseRPC:
         )
 
         response = self._make_request(self.url, payload, headers, timeout)
+
+        # Run On Hedera: Useful for viewing and debugging JSON-RPC Relay errors
+        if 400 <= response.status_code < 600:
+            print(f"Run On Hedera: Relay: response.json: {response.json()}")
+
         response.raise_for_status()
         response_json = response.json()
 
