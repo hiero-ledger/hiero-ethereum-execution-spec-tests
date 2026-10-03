@@ -19,13 +19,11 @@ from ..common import Scenario, ScenarioEnvironment, ScenarioGeneratorInput
 class AddressBalance:
     """Definition of values we use to put in contract balances and call."""
 
-    # Run On Hedera: values scaled by 1 tinybar (10_000_000_000 wei) since
-    # Hedera rejects any nonzero value below that
-    root_call_value = 1 * 10_000_000_000
-    create_value = 3 * 10_000_000_000
-    call_value = 5 * 10_000_000_000
-    root_contract_balance = 100 * 10_000_000_000
-    scenario_contract_balance = 200 * 10_000_000_000
+    root_call_value = 1
+    create_value = 3
+    call_value = 5
+    root_contract_balance = 100
+    scenario_contract_balance = 200
 
 
 def scenarios_create_combinations(

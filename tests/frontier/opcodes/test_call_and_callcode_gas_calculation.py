@@ -206,8 +206,7 @@ def caller_tx(sender: EOA, caller_address: Address, fork: Fork) -> Transaction:
 
     return Transaction(
         to=caller_address,
-        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
-        value=10_000_000_000,
+        value=1,
         gas_limit=gas_limit,
         sender=sender,
         protected=fork.supports_protected_txs(),
