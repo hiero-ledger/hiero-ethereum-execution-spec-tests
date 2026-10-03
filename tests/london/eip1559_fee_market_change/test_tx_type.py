@@ -106,8 +106,6 @@ def test_invalid_chain_id(
         pre=pre,
         tx=tx,
         post={
-            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-            # since Hedera rejects any nonzero value below that
-            to: Account(balance=0xDEADBEEE * 10_000_000_000),
+            to: Account(balance=0xDEADBEEE),
         },
     )

@@ -205,6 +205,21 @@ class TransactionPost(BaseExecute):
                     f"{actual_account.nonce}, expected 0."
                 )
             else:
+                if "balance" in expected_account.model_fields_set:
+                    # Run On Hedera: a post-state balance assertion
+                    # may mirror a sub-tinybar placeholder passed to
+                    # `pre.fund_eoa`/`pre.deploy_contract` (e.g.
+                    # `Account(balance=1)`), which the execute harness
+                    # scales up to a whole tinybar before funding.
+                    # Apply the same scaling here so the expectation
+                    # matches the actual (scaled) on-chain balance.
+                    scaled_balance = scale_sub_tinybar_amount(
+                        Number(expected_account.balance)
+                    )
+                    if scaled_balance != expected_account.balance:
+                        expected_account = expected_account.model_copy(
+                            update={"balance": scaled_balance}
+                        )
                 expected_account.check_alloc(address, actual_account)
 
         return ExecuteResult(
