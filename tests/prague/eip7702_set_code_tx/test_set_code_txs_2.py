@@ -402,8 +402,7 @@ def test_pointer_measurements(
     tx_pointer_call = Transaction(
         to=pointer,
         data=bytes.fromhex("11223344"),
-        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
-        value=30_000_000_000,
+        value=3,
         sender=sender,
     )
 
@@ -2059,8 +2058,7 @@ def test_pointer_resets_an_empty_code_account_with_storage(
         data=Op.SSTORE(6, 6)
         + Op.MSTORE(0, deploy_code.hex())
         + Op.RETURN(32 - len(deploy_code), len(deploy_code)),
-        # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei) since Hedera rejects any nonzero value below that
-        value=10_000_000_000,
+        value=1000,
         nonce=6,
         sender=sender,
         authorization_list=[

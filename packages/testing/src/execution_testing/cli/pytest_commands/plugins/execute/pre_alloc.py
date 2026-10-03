@@ -25,6 +25,7 @@ from execution_testing.base_types.conversions import (
     BytesConvertible,
     NumberConvertible,
 )
+from execution_testing.execution import scale_sub_tinybar_amount
 from execution_testing.forks import Fork, TransitionFork
 from execution_testing.logging import get_logger
 from execution_testing.recipient_type import RecipientType
@@ -54,19 +55,6 @@ from .contracts import (
 )
 
 logger = get_logger(__name__)
-
-
-# Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by
-# the node. Tests that only need a small nonzero placeholder (e.g. "1",
-# "100") express it as a tinybar count rather than wei, so scale it up by
-# the wei-per-tinybar rate
-def scale_sub_tinybar_amount(value: int) -> int:
-    WEI_TO_TINYBAR = 10_000_000_000
-    """Scale a sub-tinybar wei value up by treating it as a tinybar count."""
-    if 0 < value < WEI_TO_TINYBAR:
-        print(f">>>Run On Hedera: scale {value} to {value * WEI_TO_TINYBAR}")
-        return value * WEI_TO_TINYBAR
-    return value
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -560,7 +548,8 @@ class Alloc(SharedAlloc):
         if storage is None:
             storage = {}
         assert address is None, "address parameter is not supported"
-        # Run On Hedera: scale it up by the wei-per-tinybar rate
+        # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node
+        # scale it up by the wei-per-tinybar rate
         balance = scale_sub_tinybar_amount(Number(balance))
         fork = self._fork.fork_at(
             block_number=self._block_number, timestamp=self._timestamp
@@ -698,7 +687,8 @@ class Alloc(SharedAlloc):
         assert nonce is None, "nonce parameter is not supported for execute"
         assert code is None, "code parameter is not supported for execute"
         if amount is not None:
-            # Run On Hedera: scale it up by the wei-per-tinybar rate
+            # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node
+            # scale it up by the wei-per-tinybar rate
             amount = scale_sub_tinybar_amount(Number(amount))
         eoa = next(self._eoa_iterator)
         eoa.label = label
