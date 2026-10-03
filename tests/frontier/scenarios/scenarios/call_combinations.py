@@ -15,16 +15,14 @@ class ScenariosCallCombinations:
     class AddressBalance:
         """Definition of values we use to put in contract balances and call."""
 
-        # Run On Hedera: values scaled by 1 tinybar (10_000_000_000 wei)
-        # since Hedera rejects any nonzero value below that
-        root_call_value = 1 * 10_000_000_000
-        first_call_value = 3 * 10_000_000_000
-        second_call_value = 5 * 10_000_000_000
+        root_call_value = 1
+        first_call_value = 3
+        second_call_value = 5
 
-        root_contract_balance = 105 * 10_000_000_000
-        scenario_contract_balance = 107 * 10_000_000_000
-        sub_contract_balance = 111 * 10_000_000_000
-        program_selfbalance = 113 * 10_000_000_000
+        root_contract_balance = 105
+        scenario_contract_balance = 107
+        sub_contract_balance = 111
+        program_selfbalance = 113
 
     """The gas we keep before calling an address"""
     keep_gas = 100000
