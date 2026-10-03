@@ -4267,10 +4267,7 @@ def test_creating_delegation_designation_contract(
         address=contract_a, nonce=1, initcode=create_init, opcode=create_opcode
     )
     post = {
-        # Run On Hedera: deploy_contract rounds the requested 100 wei
-        # balance up to 1 tinybar (10_000_000_000 wei), since Hedera
-        # rejects any nonzero value below that.
-        contract_a: Account(balance=1_000_000_000_000, storage=storage),
+        contract_a: Account(balance=100, storage=storage),
         create_address: Account.NONEXISTENT,
     }
     state_test(env=env, pre=pre, post=post, tx=tx)
@@ -4489,9 +4486,7 @@ def test_authorization_reusing_nonce(
         pre=pre,
         blocks=[Block(txs=txs)],
         post={
-            # Run On Hedera: value must be >= 1 tinybar (0x2540BE400 or 10_000_000_000 wei)
-            # since Hedera rejects any nonzero value below that
-            recipient: Account(balance=10_000_000_000),
+            recipient: Account(balance=1),
             auth_signer: Account(nonce=1, code=b""),
             sender: Account(nonce=1),
         },

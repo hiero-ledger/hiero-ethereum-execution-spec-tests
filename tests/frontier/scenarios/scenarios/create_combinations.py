@@ -61,21 +61,13 @@ def scenarios_create_combinations(
 
         # the code result in init code will be actually code of a deployed
         # contract
-        # Run On Hedera: value scaled by 1 tinybar (10_000_000_000 wei) since
-        # Hedera rejects any nonzero value below that
         scenario_contract = scenario_input.pre.deploy_contract(
-            balance=3 * 10_000_000_000,
+            balance=3,
             code=Op.EXTCODECOPY(
                 operation_contract, 0, 0, Op.EXTCODESIZE(operation_contract)
             )
             + Op.MSTORE(
-                0,
-                create(
-                    3 * 10_000_000_000,
-                    0,
-                    Op.EXTCODESIZE(operation_contract),
-                    *salt,
-                ),
+                0, create(3, 0, Op.EXTCODESIZE(operation_contract), *salt)
             )
             + Op.EXTCODECOPY(Op.MLOAD(0), 0, 0, 32)
             + Op.RETURN(0, 32),
@@ -92,8 +84,8 @@ def scenarios_create_combinations(
             # Define address on which behalf program is executed
             code_address=created_address,
             code_caller=scenario_contract,
-            selfbalance=3 * 10_000_000_000,
-            call_value=3 * 10_000_000_000,
+            selfbalance=3,
+            call_value=3,
             call_dataload_0=0,
             call_datasize=0,
         )

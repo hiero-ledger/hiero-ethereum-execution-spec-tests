@@ -315,19 +315,13 @@ def build_post_state(
     "same_tx", [False, True], ids=["pre_deploy", "same_tx"]
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "has_balance" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "originator_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["no_balance", "has_balance"],
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "alive_beneficiary" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "beneficiary_initial_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["dead_beneficiary", "alive_beneficiary"],
 )
 def test_selfdestruct_to_account(
@@ -445,19 +439,13 @@ def test_selfdestruct_to_account(
     "same_tx", [False, True], ids=["pre_deploy", "same_tx"]
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "has_balance" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "originator_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["no_balance", "has_balance"],
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "alive_beneficiary" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "beneficiary_initial_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["dead_beneficiary", "alive_beneficiary"],
 )
 def test_selfdestruct_state_access_boundary(
@@ -577,21 +565,15 @@ def test_selfdestruct_state_access_boundary(
     "same_tx", [False, True], ids=["pre_deploy", "same_tx"]
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "has_balance" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "originator_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["no_balance", "has_balance"],
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "alive_beneficiary" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "beneficiary_initial_balance",
     [
         pytest.param(0, id="dead_beneficiary"),
-        pytest.param(10_000_000_000, id="alive_beneficiary"),
+        pytest.param(1, id="alive_beneficiary"),
     ],
 )
 @pytest.mark.valid_from("TangerineWhistle")
@@ -692,21 +674,15 @@ def test_selfdestruct_to_precompile(
     "same_tx", [False, True], ids=["pre_deploy", "same_tx"]
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "has_balance" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "originator_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["no_balance", "has_balance"],
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "alive_beneficiary" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "beneficiary_initial_balance",
     [
         pytest.param(0, id="dead_beneficiary"),
-        pytest.param(10_000_000_000, id="alive_beneficiary"),
+        pytest.param(1, id="alive_beneficiary"),
     ],
 )
 @pytest.mark.valid_from("TangerineWhistle")
@@ -808,11 +784,8 @@ def test_selfdestruct_to_precompile_state_access_boundary(
     "same_tx", [False, True], ids=["pre_deploy", "same_tx"]
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "has_balance" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "originator_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["no_balance", "has_balance"],
 )
 @pytest.mark.valid_from("Cancun")
@@ -955,11 +928,8 @@ def test_selfdestruct_to_system_contract(
     "is_success", [True, False], ids=["exact_gas", "exact_gas_minus_1"]
 )
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "has_balance" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "originator_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["no_balance", "has_balance"],
 )
 @pytest.mark.parametrize(
@@ -1164,11 +1134,8 @@ def test_selfdestruct_to_self(
 
 
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "has_balance" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "originator_balance",
-    [0, 10_000_000_000],
+    [0, 1],
     ids=["no_balance", "has_balance"],
 )
 @pytest.mark.valid_from("TangerineWhistle")
@@ -1272,11 +1239,8 @@ def test_initcode_selfdestruct_to_self(
 
 
 @pytest.mark.parametrize(
-    # Run On Hedera: use 1 tinybar (10_000_000_000 wei) instead of 1 wei for
-    # "has_balance" — Hedera rejects any nonzero value below 1 tinybar, and
-    # only the zero/nonzero distinction matters here.
     "originator_balance",
-    [0, 10_000_000_000],
+    [0, 100],
     ids=["no_balance", "has_balance"],
 )
 @pytest.mark.valid_from("TangerineWhistle")
