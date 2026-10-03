@@ -90,8 +90,7 @@ def test_all_opcodes(
             else:
                 test_opcode = opcode[0]
         code_contract[opcode] = pre.deploy_contract(
-            # Run On Hedera: value must be >= 1 tinybar (10_000_000_000 wei) since Hedera rejects any nonzero value below that
-            balance=10_000_000_000,
+            balance=1,
             code=prepare_stack(opcode) + test_opcode + prepare_suffix(opcode),
             storage={},
         )

@@ -86,13 +86,13 @@
 ## ⚠️[Prague](hedera_prague.md)
 
 ## ⚠️[Cancun](hedera_cancun.md)
-## shanghai
-## paris
-## london (new)
-## berlin
-## istanbul
-## constantinople
-## byzantium
+## ⚠️[Shanghai](hedera_shanghai.md)
+## ✅[Paris](hedera_paris.md)
+## ✅[London](hedera_london.md)
+## [Berlin](hedera_berlin.md)
+## [Istanbul](hedera_istanbul.md)
+## [Constantinople](hedera_constantinople.md)
+## [Byzantium](hedera_byzantium.md)
  
 ## ⚠️[Tangerine Whistle](hedera_tangerine_whistle.md)
 
