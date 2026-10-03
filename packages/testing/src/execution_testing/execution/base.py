@@ -22,6 +22,7 @@ WEI_TO_TINYBAR = 10_000_000_000
 def scale_sub_tinybar_amount(value: int) -> int:
     """Scale a sub-tinybar wei value up by treating it as a tinybar count."""
     if 0 < value < WEI_TO_TINYBAR:
+        print(f">>>Run On Hedera: scale {value} to {value * WEI_TO_TINYBAR}")
         return value * WEI_TO_TINYBAR
     return value
 
