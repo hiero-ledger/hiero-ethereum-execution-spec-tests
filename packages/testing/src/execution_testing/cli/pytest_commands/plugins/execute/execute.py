@@ -66,25 +66,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         ),
     )
 
-    execute_group = parser.getgroup(
-        "execute", "Arguments defining execute behavior"
-    )
-    execute_group.addoption(
-        "--env-gas-limit",
-        action="store",
-        dest="env_gas_limit",
-        type=int,
-        default=None,
-        help=(
-            "Override the environment gas limit used as the ceiling for "
-            "transactions that don't set their own gas limit, instead of "
-            "deriving it from the head block's `gasLimit`. Useful when the "
-            "RPC endpoint reports a `gasLimit` higher than what it will "
-            "actually accept per transaction. Default=None (use head "
-            "block's gasLimit)."
-        ),
-    )
-
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
@@ -292,19 +273,11 @@ def gas_limit_accumulator() -> Generator[GasInfoAccumulator, None, None]:
 
 
 @pytest.fixture(scope="session")
-def env_gas_limit(
-    request: pytest.FixtureRequest, eth_rpc: EthRPC
-) -> HexNumber:
+def env_gas_limit(eth_rpc: EthRPC) -> HexNumber:
     """
-    Return the environment gas limit used as the ceiling for transactions
-    that don't set their own gas limit.
-
-    Derived from the head block before tests start running, unless
-    overridden via `--env-gas-limit`.
+    Return the environment gas limit derived from the head block before
+    tests start running.
     """
-    override = request.config.getoption("env_gas_limit")
-    if override is not None:
-        return HexNumber(override)
     head_block = eth_rpc.get_block_by_number()
     assert head_block is not None, "Unable to obtain head block from RPC"
     return HexNumber(head_block["gasLimit"])
