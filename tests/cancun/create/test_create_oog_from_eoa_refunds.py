@@ -265,7 +265,11 @@ def test_create_oog_from_eoa_refunds(
     extra_gas = (
         fork.is_eip_enabled(8037) and oog_scenario == OogScenario.NO_OOG
     )
-    sender = pre.fund_eoa(amount=500_000_000 if extra_gas else 4_000_000)
+    # Run On Hedera: `sender` only ever pays its own transaction's gas
+    # (no value/balance check depends on it), so defer funding instead
+    # of guessing a fixed wei amount — the harness sizes it from the
+    # real network gas price, unlike a hardcoded amount
+    sender = pre.fund_eoa()
     init_code = build_init_code(refund_type, oog_scenario, helpers)
     created_address = compute_create_address(address=sender, nonce=0)
 
