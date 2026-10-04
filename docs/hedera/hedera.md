@@ -89,7 +89,7 @@
 ## ✅[Paris](hedera_paris.md)
 ## ✅[London](hedera_london.md)
 ## ✅[Berlin](hedera_berlin.md)
-## ⚠️[Istanbul](hedera_istanbul.md)
+## ✅[Istanbul](hedera_istanbul.md)
 ## [Constantinople](hedera_constantinople.md)
 ## [Byzantium](hedera_byzantium.md)
 ## ❓[Tangerine Whistle](hedera_tangerine_whistle.md)

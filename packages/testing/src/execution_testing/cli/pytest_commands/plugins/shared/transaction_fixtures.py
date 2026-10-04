@@ -24,7 +24,10 @@ def type_0_default_transaction(sender: EOA) -> Transaction:
     return Transaction(
         ty=0,
         sender=sender,
-        gas_price=71**10,
+        # Run On Hedera: leave gas_price unset so the execute harness fills
+        # it from the live network gas price. A hardcoded value here can
+        # land far off Hedera's actual gas price (too low to be accepted,
+        # or — as previously here — absurdly high and unfundable).
         data=b"\x00" * 100,
         protected=True,
     )
@@ -36,7 +39,10 @@ def type_1_default_transaction(sender: EOA) -> Transaction:
     return Transaction(
         ty=1,
         sender=sender,
-        gas_price=71**10,
+        # Run On Hedera: leave gas_price unset so the execute harness fills
+        # it from the live network gas price. A hardcoded value here can
+        # land far off Hedera's actual gas price (too low to be accepted,
+        # or — as previously here — absurdly high and unfundable).
         data=b"\x00" * 100,
         access_list=[
             AccessList(address=0x1234, storage_keys=[0, 1, 2]),
