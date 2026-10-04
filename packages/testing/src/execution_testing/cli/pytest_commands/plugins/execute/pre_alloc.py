@@ -874,6 +874,10 @@ class Alloc(SharedAlloc):
         that multiple fund_address calls can be batched into a single
         RPC round trip.
         """
+        # Run On Hedera: a nonzero value transfer below 1 tinybar is
+        # rejected by the node, so scale it up by the wei-per-tinybar
+        # rate (same treatment as `fund_eoa`/`deploy_contract`).
+        amount = scale_sub_tinybar_amount(Number(amount))
         self._deferred_fund_addresses.append(
             _DeferredFundAddress(
                 address=address,
