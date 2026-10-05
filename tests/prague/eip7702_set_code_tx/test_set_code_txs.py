@@ -4588,10 +4588,8 @@ def test_set_code_from_account_with_non_delegating_code(
             # limit times a single-digit fee funds the sender with a
             # sub-tinybar amount, which Hedera rejects as a nonzero
             # transfer below its 10_000_000_000 wei (1 tinybar) minimum.
-            # 2_000 keeps priority > max_fee (still triggers the same
-            # exception) while clearing that floor with margin.
-            2_000,
-            2_001,
+            710_000_000_000,
+            720_000_000_000,
             TransactionException.PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS,
             id="priority_greater_than_max_fee_per_gas",
         ),
