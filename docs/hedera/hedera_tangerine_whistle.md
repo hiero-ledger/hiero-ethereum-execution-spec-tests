@@ -10,7 +10,6 @@ uv run execute remote -rA -vv --fork=Prague \
     --default-max-fee-per-blob-gas=710_000_000_000 \
     --tx-wait-timeout=15 \
     --max-tx-per-batch=1 \
-    --env-gas-limit=15000000 \
     "tests/tangerine_whistle/"
 ```
 

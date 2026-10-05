@@ -17,7 +17,6 @@ UPPER_BOUND = 0x101
 RETURNDATASIZE_OFFSET = 0x10000000000000000  # Must be greater than UPPER_BOUND
 
 
-@pytest.mark.skip(reason="Run On Hedera: Same failure on Hedera and GETH")
 @pytest.mark.parametrize(
     "calldata_size",
     [

@@ -1466,7 +1466,6 @@ uv run execute remote -rA --verbose --fork=Prague \
     --default-max-fee-per-blob-gas=710_000_000_000 \
     --tx-wait-timeout=15 \
     --max-tx-per-batch=1 \
-    --env-gas-limit=15000000 \
     "tests/prague/eip7702_set_code_tx/test_set_code_txs_2.py::test_pointer_measurements[fork_Prague-blockchain_test]"
 ```
 
@@ -1506,7 +1505,6 @@ uv run execute remote -rA --verbose --fork=Prague \
     --default-max-fee-per-blob-gas=710_000_000_000 \
     --tx-wait-timeout=15 \
     --max-tx-per-batch=1 \
-    --env-gas-limit=15000000 \
     "tests/prague/eip7685_general_purpose_el_requests/test_multi_type_requests.py::test_valid_multi_type_request_from_same_tx[fork_Prague-blockchain_test-deposit+withdrawal+consolidation]"
 ```
 

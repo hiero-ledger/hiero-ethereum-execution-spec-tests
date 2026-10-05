@@ -4,7 +4,6 @@
 - `# Run On Hedera:` comments added where the 'static change' is done on test cases
 - `# TODO Fix On Hedera:` comments added where fixes are required on Hedera for the core spec test framework to work
 - `# Fixed In Test:` comments added where a genuine test bug (not a Hedera behavior difference) was found and fixed while running against Hedera
-- added `--env-gas-limit` flag. Override the environment gas limit used
 
 # Require Fix On Hedera
 
@@ -30,7 +29,6 @@
        --seed-account-sweep-amount='1_000_000 ether' \
        --default-max-fee-per-blob-gas=710 \
        --tx-wait-timeout=15 \
-       --env-gas-limit=15000000 \
        "tests/frontier/create/test_create_deposit_oog.py::test_create_deposit_oog[fork_Prague-create_opcode_CREATE2-state_test-enough_gas_True]"
    ```
    2. prague
@@ -90,8 +88,8 @@
 ## ✅[London](hedera_london.md)
 ## ✅[Berlin](hedera_berlin.md)
 ## ✅[Istanbul](hedera_istanbul.md)
-## [Constantinople](hedera_constantinople.md)
+## ⚠️[Constantinople](hedera_constantinople.md)
 ## ✅[Byzantium](hedera_byzantium.md)
-## ❓[Tangerine Whistle](hedera_tangerine_whistle.md)
+## ⚠️[Tangerine Whistle](hedera_tangerine_whistle.md)
 ## ✅[Homestead](hedera_homestead.md)
-## ❓️[Frontier](hedera_frontier.md)
+## ⚠️[Frontier](hedera_frontier.md)
