@@ -14,172 +14,8 @@ uv run execute remote -rA -vv --fork=Prague \
 ```
 
 ### Run Failures
+// TODO
 
-##### ✅ 1. "Value can't be non-zero and less than 10,000,000,000 wei" (53 failures)
-
-The remote client enforces a minimum nonzero transfer amount (10 Gwei), which breaks any test using small nonzero `value` fields (a common construct in these opcode/scenario tests).
-
-###### Affected tests
-
-✅ **Identity precompile (2)**
-- `test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALL]`
-- `test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALLCODE]`
-
-✅ **All opcodes (1)**
-- `test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]`
-
-✅ **Call/callcode gas calculation (8)**
-- `test_call_and_callcode_gas_calculation.py::test_value_transfer_gas_calculation[fork_Prague-state_test-gas_shortage_0-callee_opcode_CALL]`
-- `test_call_and_callcode_gas_calculation.py::test_value_transfer_gas_calculation[fork_Prague-state_test-gas_shortage_0-callee_opcode_CALLCODE]`
-- `test_call_and_callcode_gas_calculation.py::test_value_transfer_gas_calculation[fork_Prague-state_test-gas_shortage_0-callee_opcode_DELEGATECALL]`
-- `test_call_and_callcode_gas_calculation.py::test_value_transfer_gas_calculation[fork_Prague-state_test-gas_shortage_0-callee_opcode_STATICCALL]`
-- `test_call_and_callcode_gas_calculation.py::test_value_transfer_gas_calculation[fork_Prague-state_test-gas_shortage_1-callee_opcode_CALL]`
-- `test_call_and_callcode_gas_calculation.py::test_value_transfer_gas_calculation[fork_Prague-state_test-gas_shortage_1-callee_opcode_CALLCODE]`
-- `test_call_and_callcode_gas_calculation.py::test_value_transfer_gas_calculation[fork_Prague-state_test-gas_shortage_1-callee_opcode_DELEGATECALL]`
-- `test_call_and_callcode_gas_calculation.py::test_value_transfer_gas_calculation[fork_Prague-state_test-gas_shortage_1-callee_opcode_STATICCALL]`
-
-✅ **Calldatacopy (8)**
-- `test_calldatacopy.py::test_calldatacopy[fork_Prague-state_test-cdc 0 1 2]`
-- `test_calldatacopy.py::test_calldatacopy[fork_Prague-state_test-cdc 0 1 1]`
-- `test_calldatacopy.py::test_calldatacopy[fork_Prague-state_test-cdc 0 1 0]`
-- `test_calldatacopy.py::test_calldatacopy[fork_Prague-state_test-cdc 0 0 0]`
-- `test_calldatacopy.py::test_calldatacopy[fork_Prague-state_test-cdc 0 neg6 ff]`
-- `test_calldatacopy.py::test_calldatacopy[fork_Prague-state_test-cdc 0 neg6 9]`
-- `test_calldatacopy.py::test_calldatacopy[fork_Prague-state_test-underflow]`
-- `test_calldatacopy.py::test_calldatacopy[fork_Prague-state_test-sec]`
-
-✅ **Scenarios (34)** — `test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_<NAME>-debug]` for:
-```
-SSTORE_SLOAD, TSTORE_TLOAD, LOGS, SUICIDE, INVALID, ADDRESS, BALANCE, ORIGIN,
-CALLER, CALLVALUE, CALLDATALOAD, CALLDATASIZE, CALLDATACOPY, CODECOPY_CODESIZE,
-GASPRICE, EXTCODECOPY_EXTCODESIZE, RETURNDATASIZE, RETURNDATACOPY, EXTCODEHASH,
-BLOCKHASH, COINBASE, TIMESTAMP, NUMBER, DIFFICULTY, GASLIMIT, CHAINID,
-SELFBALANCE, BASEFEE, BLOBHASH, BLOBBASEFEE, TLOAD, MCOPY, PUSH0,
-ALL_FRONTIER_OPCODES
-```
-
-###### Likely fix
-Either adjust the client/RPC config to allow small nonzero transfers in this test environment, or the test harness needs a flag/workaround for the minimum-value restriction.
-
----
-
-##### ⚠️ 2. Storage/state mismatch — `Storage.KeyValueMismatchError` (21 failures)
-
-Actual on-chain storage differs from the expected value — points to real behavioral divergence in opcode/precompile/CREATE semantics.
-
-###### Affected tests
-
-**CREATE one-byte (2)**
-- `test_create_one_byte.py::test_create_one_byte[fork_Prague-create_opcode_CREATE2-state_test]`
-- `test_create_one_byte.py::test_create_one_byte[fork_Prague-create_opcode_CREATE-state_test]`
-
-**CREATE + SUICIDE during init, SUICIDE_TO_ITSELF variant (3)**
-- `test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE2-state_test-operation_Operation.SUICIDE_TO_ITSELF-transaction_create_False]`
-- `test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE-state_test-operation_Operation.SUICIDE_TO_ITSELF-transaction_create_False]`
-- `test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE-state_test-operation_Operation.SUICIDE_TO_ITSELF-transaction_create_True]`
-
-**Identity precompile, large params (2)**
-- `test_identity.py::test_call_identity_precompile_large_params[fork_Prague-state_test-identity_5-call_type_CALL]`
-- `test_identity.py::test_call_identity_precompile_large_params[fork_Prague-state_test-identity_5-call_type_CALLCODE]`
-
-**All opcodes constant gas (8)**
-- `test_all_opcodes.py::test_constant_gas[fork_Prague-BALANCE-state_test]`
-- `test_all_opcodes.py::test_constant_gas[fork_Prague-EXTCODESIZE-state_test]`
-- `test_all_opcodes.py::test_constant_gas[fork_Prague-EXTCODECOPY-state_test]`
-- `test_all_opcodes.py::test_constant_gas[fork_Prague-EXTCODEHASH-state_test]`
-- `test_all_opcodes.py::test_constant_gas[fork_Prague-CALLCODE-state_test]`
-- `test_all_opcodes.py::test_constant_gas[fork_Prague-DELEGATECALL-state_test]`
-- `test_all_opcodes.py::test_constant_gas[fork_Prague-STATICCALL-state_test]`
-- `test_all_opcodes.py::test_constant_gas[fork_Prague-SELFDESTRUCT-state_test]`
-
-**Genesis blockhash availability (4)**
-- `test_blockhash.py::test_genesis_hash_available[fork_Prague-blockchain_test-no_blocks]`
-- `test_blockhash.py::test_genesis_hash_available[fork_Prague-blockchain_test-one_empty_block]`
-- `test_blockhash.py::test_genesis_hash_available[fork_Prague-blockchain_test-one_block_with_tx]`
-- `test_blockhash.py::test_genesis_hash_available[fork_Prague-blockchain_test-256_empty_blocks]`
-
-**Precompile absence (2)**
-- `test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000012-precompile_exists_False-state_test]`
-- `test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000000-precompile_exists_False-state_test]`
-
-###### Likely fix
-Investigate CREATE/SUICIDE interaction handling, `EXT*`/`*CALL` cost and return-value semantics, genesis blockhash lookup, and precompile-absence behavior at the addresses in question — these may reflect real client bugs rather than test framework issues.
-
----
-
-##### ⚠️ 3. Nonce/Code mismatch on SUICIDE + CREATE (3 failures)
-
-- `test_test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE2-state_test-operation_Operation.SUICIDE-transaction_create_False]create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE2-state_test-operation_Operation.SUICIDE-transaction_create_False]`
-  → `AssertionError: Nonce of 0x6afa8bc124cf2bd6cb2b41b6245ccadaccffb1d6 is 0x01, expected 0.`
-- `test_create_suicide_store.py::test_create_suicide_store[fork_Prague-create_opcode_CREATE2-state_test]`
-  → `AssertionError: Code of 0x839aea5d1ea566d8926f68d72583bd1aefccaab3 is <non-empty>` (expected different code)
-- `test_create_suicide_store.py::test_create_suicide_store[fork_Prague-create_opcode_CREATE-state_test]`
-  → same issue, different address (`0x8b7f4cd2181dc1e68c45aced9af7ac6bb91932e5`)
-
-###### Likely fix
-Review nonce increment and code-persistence rules when a contract self-destructs during its own initcode execution.
-
----
-
-##### ✅ 4. (Same fail with GETH) "initcode prefix too long" (3 failures)
-
-- `test_precompile_absence.py::test_precompile_absence[fork_Prague-state_test-empty_calldata]`
-- `test_precompile_absence.py::test_precompile_absence[fork_Prague-state_test-31_bytes]`
-- `test_precompile_absence.py::test_precompile_absence[fork_Prague-state_test-32_bytes]`
-
-###### Likely fix
-Test setup/framework issue generating an oversized initcode prefix — review how `test_precompile_absence` constructs its deployment code; possibly a bumped precompile address range triggering different initcode-length assumptions.
-
----
-
-##### ✅ 5. (Same fail with GETH) "Sender balance must be set before sending" (4 failures)
-
-- `test_transaction.py::test_tx_gas_limit[fork_Prague-blockchain_test]`
-- `test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_-1-expected_exception_TransactionException.INSUFFICIENT_ACCOUNT_FUNDS]`
-- `test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_0-expected_exception_None]`
-- `test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_1-expected_exception_None]`
-
-###### Likely fix
-Pre-alloc/test setup ordering issue — sender balance isn't populated before the transaction-send step in the `blockchain_test` path. This aligns with the 3 tests already **skipped** for "Pre-alloc modification not supported" in `test_transaction.py`.
-
----
-
-##### ✅ 6. (failing on GETH with 'only replay-protected (EIP-155) transactions allowed over RPC') Unexpected transaction rejection (1 failure)
-
-- `test_block_intermediate_state.py::test_block_intermediate_state[fork_Prague-blockchain_test]`
-  → `SendTransactionExceptionError: INVALID_ETHEREUM_TRANSACTION`
-
-###### Likely fix
-Investigate whether this is also value/nonce related (per category 1), or a genuinely invalid transaction construction in the intermediate-state test.
-
----
-
-##### 7. RPC response validation error — pydantic_core.ValidationError: 2 validation errors for JSONRPCResponse (34 failures)
-
-The client's JSON-RPC response no longer matches the expected JSONRPCResponse schema on 2 fields, causing the harness to fail parsing before the test can even evaluate results. This is a new failure mode versus the previous run and affects a broad swath of test_scenarios.py, plus a couple of other tests that share the same RPC call path.
-
-###### Affected tests
-
-Create (2)
-- `test_create_one_byte.py::test_create_one_byte[fork_Prague-create_opcode_CREATE2-state_test]`
-- `test_create_one_byte.py::test_create_one_byte[fork_Prague-create_opcode_CREATE-state_test]`
-
-All opcodes (1)
-- `test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]`
-
-Scenarios (31) 
-- `test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_<NAME>-debug]` for:
-```
-SSTORE_SLOAD, TSTORE_TLOAD, LOGS, SUICIDE, INVALID, ADDRESS, ORIGIN, CALLER,
-CALLVALUE, CALLDATALOAD, CALLDATASIZE, CALLDATACOPY, CODECOPY_CODESIZE,
-GASPRICE, RETURNDATASIZE, RETURNDATACOPY, BLOCKHASH, COINBASE, TIMESTAMP,
-NUMBER, DIFFICULTY, GASLIMIT, CHAINID, SELFBALANCE, BASEFEE, BLOBHASH,
-BLOBBASEFEE, TLOAD, MCOPY, PUSH0, ALL_FRONTIER_OPCODES
-```
-
-###### Likely fix
-
-Investigate whether the remote client changed its JSON-RPC response shape (field renamed/removed/retyped) or whether the test harness's JSONRPCResponse pydantic model is out of sync with the client version under test. Since this spans many unrelated opcodes/scenarios, it points to a harness/client protocol mismatch rather than a per-opcode bug — check a raw response payload against the pydantic schema to find the two mismatched fields.
 
 #### Run Results
 ```
@@ -1259,9 +1095,9 @@ FAILED tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-bl
 FAILED tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32000, message=[Request ID: bc5fe355-ac4b-49da-bc5d-7dec77433a53] Nonce too low. Provided nonce: 5660, current nonce: 5661) Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x161c","gas_price":"0xf920f84c00","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x1ae4a","to":null,"value":"0x107193fa400","data":"0x610009600081600b8239f34560005260206000f3","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x278","r":"0xd5541621409a326aa55f007ef33510604eb5d30a390f4ad02a877d92363bcec3","s":"0x275a22c64bf39486d4abaac715a3f3deab5bb2dd82d748c9b767f85208895233","sender":"0xf70febf7420398c3892ce79fdc393c1a5487ad27","authorization_list":null,"initcodes":null,"secret_key":null}
 FAILED tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_CHAINID-debug] - Exception: Transactions 0x738f03345e578e013765073cb1d0f28c8f93415eb382b7db9b6741cccead6e8d ({"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x1629","gas_price":"0xf920f84c00","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x1ae4a","to":null,"value":"0x107193fa400","data":"0x610009600081600b8239f34660005260206000f3","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x277","r":"0x592aa0bd129dc463230639ed483642cdf8a23695af307d80bd3b11131033138b","s":"0xc6fcec71408f7b248962930b52e9d5ee0107f6e98379c70861f0c1cbccef603","sender":"0xf70febf7420398c3892ce79fdc393c1a5487ad27","authorization_list":null,"initcodes":null,"secret_key":null}) not included in a block after 15 seconds
 FAILED tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_SELFBALANCE-debug] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32000, message=[Request ID: 0989c131-9a56-4896-bf3a-cf3633f5174e] Nonce too low. Provided nonce: 5673, current nonce: 5674) Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x1629","gas_price":"0xf920f84c00","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x1ae4a","to":null,"value":"0x107193fa400","data":"0x610009600081600b8239f34760005260206000f3","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x278","r":"0x21fe09e3d6df8bc365dbaef9ebcdbce2b55297f2aaf676f1c4a62e425428cdc3","s":"0xa925a1b8a4d13ebc0b2f801e5561ea9a20337b4e316cab5b46048238012f60b","sender":"0xf70febf7420398c3892ce79fdc393c1a5487ad27","authorization_list":null,"initcodes":null,"secret_key":null}
-FAILED tests/frontier/validation/test_transaction.py::test_tx_gas_limit[fork_Prague-blockchain_test] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32602, message=[Request ID: 7a87339b-64bf-41fd-b003-c118f41e4201] Value can't be non-zero and less than 10_000_000_000 wei which is 1 tinybar) Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x1a54","gas_price":"0xf920f84c00","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x5208","to":"0x8f1090bb177540e393cde960c375e67e9698ae29","value":"0x186a10","data":"0x","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x278","r":"0xc07db55e80716fc63476cbda1e0ba9dc67973ee3e83ecf4985cb99566c74a528","s":"0x2b8ae2e31b8dfeab2d6e5ed533620ce5fddb792f778f161c1ea75df1abcc2963","sender":"0xf70febf7420398c3892ce79fdc393c1a5487ad27","authorization_list":null,"initcodes":null,"secret_key":null}
 FAILED tests/frontier/validation/test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_0-expected_exception_None] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32009, message=[Request ID: 90154058-df32-47f9-becd-1eb2fdde8c90] Gas price '10' is below configured minimum gas price '710000000000') Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x0","gas_price":"0xa","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x5208","to":"0xe7c82df5de399abbcab17e5014486016e3200951","value":"0x0","data":"0x","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x1b","r":"0x538216fb2229e643b41ae838c8dd5a7370f9457eabde2166c2f5fd7d286679c3","s":"0x7a266113f7ed47a435ef0940bcda02d0117f3c1ad8ad73134ed0c63861576fad","sender":"0x5a47b55b640ae26f79a3348d2acea16a2a6ca393","authorization_list":null,"initcodes":null,"secret_key":null}
 FAILED tests/frontier/validation/test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_1-expected_exception_None] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32009, message=[Request ID: affb2824-ca69-4a5d-af79-5ee32aa7d95a] Gas price '10' is below configured minimum gas price '710000000000') Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x0","gas_price":"0xa","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x5208","to":"0x16a1cfaf2ed93fbe9cfddba499357e02bafebb6f","value":"0x0","data":"0x","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x1b","r":"0x598ad1d16d907aa366357acb1a04765a695e754cfbb51d3ffae1800391aa9b27","s":"0x152f5afcc1c9d82e55f3f728529304b2d48b0845aa63db801dd741574c1a4f35","sender":"0x28f81b09b9fb66bffcf7e66d613951ca99c9d6dc","authorization_list":null,"initcodes":null,"secret_key":null}
 FAILED tests/frontier/validation/test_transaction_rlp.py::test_valid_reencoded_transaction[fork_Prague-transaction_test] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32001, message=[Request ID: 2ad6244b-e398-47e1-a41f-69d3db22c9b2] Requested resource not found. address '0xC5C8edd472A6FF63090Ac982028C4C2Ab7F350e1'.) Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x0","gas_price":"0xa","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x7530","to":"0x2ef7135ef064667faf9594ac031b563e78d267eb","value":"0x2540be400","data":"0x","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x277","r":"0x86f6ba3e897542c70d08722b4c084bda5a7d5709f50d0f7a0826cda4f6475d4","s":"0x6173cca0511ff7ee5ac0e318d103bd4cd8b82fa9a178ee27bcfbb41d75c5d81a","sender":"0x77f962117539d6e4dda6c8385990c68f52943e40","authorization_list":null,"initcodes":null,"secret_key":null}
+ERROR tests/frontier/validation/test_transaction.py::test_tx_gas_limit[fork_Prague-blockchain_test] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32003, message=[Request ID: 6f775ae2-ece6-4f97-bf8c-f50505928aed] Transaction rejected: WRONG_NONCE - receipt for transaction 0.0.2@1791189394.666998147 contained error status WRONG_NONCE) Transaction={"rlp_override":null,"ty":"0x2","chain_id":"0x12a","nonce":"0x0","gas_price":null,"max_priority_fee_per_gas":"0x0","max_fee_per_gas":"0xf920f84c00","gas_limit":"0x5208","to":"0xf70febf7420398c3892ce79fdc393c1a5487ad27","value":"0xac6a6c723f5c00","data":"0x","access_list":[],"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x1","r":"0x530d91ae91abdf90c099d16a52d94d84ada5b390ad5c7b7ea739175afd69fe9e","s":"0x20dd74c4b7a8911051a2eb61b1ba73f9d91bd94fa4016f1954c4e5a1dd85cda3","sender":"0xebaea8068b3cbd2ebb12ffdda4dbe305d491b392","authorization_list":null,"initcodes":null,"secret_key":null}
 ============================================================= 43 failed, 1024 passed, 123 skipped, 9 deselected, 1 warning in 17118.65s (4:45:18) =============================================================
 ```

@@ -50,7 +50,10 @@ def test_tx_gas_limit(
     tx = Transaction(
         gas_limit=block_gas_limit + 1,
         to=to,
-        gas_price=0x10,  # Must be >= base fee to isolate gas limit validation
+        # Run On Hedera: leave gas_price unset so the execute harness fills
+        # it from the live network gas price. A hardcoded value here can
+        # land far off Hedera's actual gas price
+        gas_price=0xA54F4C3C00,  # Must be >= base fee to isolate gas limit validation
         sender=sender,
         protected=False,
         error=TransactionException.GAS_ALLOWANCE_EXCEEDED,
