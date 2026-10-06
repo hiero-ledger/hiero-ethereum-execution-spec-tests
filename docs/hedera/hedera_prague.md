@@ -50,7 +50,7 @@ uv run execute remote -rA -vv --fork=Prague \
 ### Running with geth
 ```bash
 #Geth run
-docker run --name geth --publish 8545:8545 --detach registry.hub.docker.com/ethereum/client-go:v1.17.5 --dev --verbosity 3 --http --http.api eth --http.addr 0.0.0.0 --rpc.txfeecap 20 --dev.gaslimit 15000000
+docker run --name geth --publish 8545:8545 --detach registry.hub.docker.com/ethereum/client-go:v1.17.5 --dev --verbosity 3 --http --http.api eth --http.addr 0.0.0.0 --rpc.txfeecap 1000
 #Tests run
 uv run execute remote -rA -vv --fork=Prague \
     --rpc-endpoint=http://localhost:8545/ \

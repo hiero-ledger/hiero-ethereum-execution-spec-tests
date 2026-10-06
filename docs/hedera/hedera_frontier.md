@@ -14,8 +14,126 @@ uv run execute remote -rA -vv --fork=Prague \
 ```
 
 ### Run Failures
-// TODO
 
+---
+##### 1. (CN?) SELFDESTRUCT does not apply when triggered via internal CALL or during init code
+**Pattern:** `Account.NonceMismatchError: Nonce of 0x...: is 0x01, expected 0.` / `Account.CodeMismatchError: Code of 0x...: is 0x<code>, expected 0x.` / `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` (cascading from the account not being deleted) / `test_constant_gas[SELFDESTRUCT]`'s own gas measurement reading `0` instead of the expected cold-beneficiary cost.
+
+**Root cause:** Same family as [hedera_constantinople.md #1](hedera_constantinople.md#1-cn-selfdestruct-via-internal-callcallcodedelegatecall-does-not-apply-on-hedera). `test_create_suicide_during_transaction_create` runs `SELFDESTRUCT` directly inside a `CREATE`/`CREATE2`'s init code; `test_create_suicide_store` creates a contract then triggers its `SELFDESTRUCT` via a separate internal `CALL`. Both expect the account to end up `Account.NONEXISTENT`, but it persists (nonce/code unchanged). `test_constant_gas[SELFDESTRUCT]` tries to measure `SELFDESTRUCT`'s own gas cost (expects the cold-beneficiary surcharge, `7600`) but reads `0`, consistent with the operation not actually being applied.
+
+**Total:** 9 (Hedera-only; not yet checked against Geth)
+
+**Hedera-only — 9 tests**
+```
+tests/frontier/create/test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE2-state_test-operation_Operation.SUICIDE-transaction_create_False]
+tests/frontier/create/test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE2-state_test-operation_Operation.SUICIDE_TO_ITSELF-transaction_create_False]
+tests/frontier/create/test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE-state_test-operation_Operation.SUICIDE-transaction_create_False]
+tests/frontier/create/test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE-state_test-operation_Operation.SUICIDE-transaction_create_True]
+tests/frontier/create/test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE-state_test-operation_Operation.SUICIDE_TO_ITSELF-transaction_create_False]
+tests/frontier/create/test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE-state_test-operation_Operation.SUICIDE_TO_ITSELF-transaction_create_True]
+tests/frontier/create/test_create_suicide_store.py::test_create_suicide_store[fork_Prague-create_opcode_CREATE2-state_test]
+tests/frontier/create/test_create_suicide_store.py::test_create_suicide_store[fork_Prague-create_opcode_CREATE-state_test]
+tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-SELFDESTRUCT-state_test]
+```
+
+---
+##### 2. (CN?) Address/call warm-access cost not honored — broader than coinbase pre-warming
+**Pattern:** `Storage.KeyValueMismatchError: ... want 0x64 (100), got 0xa28 (2600)` (numeric cost reads cold instead of warm) — or `want 0x1, got 0x0` for the `CALL`-family opcodes, where the measurement call itself fails/runs out of gas because it was only given the warm-cost gas allowance.
+
+**Root cause:** Related to [hedera_shanghai.md #1](hedera_shanghai.md#1-cn-coinbase-address-is-not-pre-warmed-eip-3651) but broader — that entry is specifically about `COINBASE` under EIP-3651; this one is `test_constant_gas` measuring generic EIP-2929 warm/cold access for `BALANCE`/`EXTCODESIZE`/`EXTCODECOPY`/`EXTCODEHASH`/`CALLCODE`/`DELEGATECALL`/`STATICCALL`, where the test's own `setup_code` already accesses the address once (making it warm for the measured second access). On Hedera the second access still costs the cold price (`2600` instead of `100`), suggesting EIP-2929 access-list warming isn't honored for repeat accesses within a transaction, not just for the EIP-3651 coinbase case.
+
+**Total:** 7 (Hedera-only; not yet checked against Geth)
+
+**Hedera-only — 7 tests**
+```
+tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-BALANCE-state_test]
+tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-EXTCODESIZE-state_test]
+tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-EXTCODECOPY-state_test]
+tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-EXTCODEHASH-state_test]
+tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-CALLCODE-state_test]
+tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-DELEGATECALL-state_test]
+tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-STATICCALL-state_test]
+```
+
+---
+##### 3. (CN?) BLOCKHASH returns 0 for genesis/recent blocks
+**Pattern:** `Storage.KeyValueMismatchError: ... want 0x0, got 0x1` — storing `ISZERO(BLOCKHASH(n))`, expecting `0` (hash present) but getting `1` (hash absent/zero).
+
+**Root cause:** `test_genesis_hash_available` expects `BLOCKHASH(0)` (genesis) and `BLOCKHASH(1)` to return a real, nonzero hash when queried from a later block. On Hedera both return `0`, across all four setup variants (no blocks, one empty block, one block with a tx, 256 empty blocks) — suggesting Hedera doesn't populate `BLOCKHASH` for genesis or otherwise returns `0` where a real hash is expected.
+
+**Total:** 4 (Hedera-only; not yet checked against Geth)
+
+**Hedera-only — 4 tests**
+```
+tests/frontier/opcodes/test_blockhash.py::test_genesis_hash_available[fork_Prague-blockchain_test-no_blocks]
+tests/frontier/opcodes/test_blockhash.py::test_genesis_hash_available[fork_Prague-blockchain_test-one_empty_block]
+tests/frontier/opcodes/test_blockhash.py::test_genesis_hash_available[fork_Prague-blockchain_test-one_block_with_tx]
+tests/frontier/opcodes/test_blockhash.py::test_genesis_hash_available[fork_Prague-blockchain_test-256_empty_blocks]
+```
+
+---
+##### 4. (CN?) CALL with a nonzero value to a precompile address fails
+**Pattern:** `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` — a `CALL`/`CALLCODE` sending value to the identity precompile (`0x04`), expected to succeed, but the call fails.
+
+**Root cause:** Not the sub-tinybar floor — already ruled out. The test's `value` is already exactly 1 tinybar (`0x2540BE400`), and the caller contract's balance is scaled to match exactly (confirmed via the deploy log: `balance=0.000000010000000000 ETH`). Bumping the caller's balance to 2 tinybar (so balance > value with margin) still fails identically; bumping the call's `gas` from `0x30D40` to `1_000_000` also still fails identically. Both "insufficient balance" and "insufficient gas" are ruled out. The only thing distinguishing this from the passing `identity_1`/`identity_2`/etc. variants in the same file is that it sends a *nonzero value* to a *precompile address* — pointing to Hedera not supporting value transfers to precompile addresses via `CALL`/`CALLCODE` at all, independent of amount, balance, or gas. No test-side parameter fix found.
+
+**Total:** 2 (Hedera-only; not yet checked against Geth)
+
+**Hedera-only — 2 tests**
+```
+tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALL]
+tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALLCODE]
+```
+
+---
+##### 5. (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement
+**Pattern:** `Storage.KeyValueMismatchError: ... want 0xa (10), got 0x0` (underfunded-call loop never records expected failures) / `want 0x1, got 0x0` (gas-usage-difference check between a precompile and a reference address).
+
+**Root cause:** Not fully traced — both tests rely on exact-to-the-gas-unit accounting (`test_repeated_underfunded_calls` forwards precompile gas minus exactly 1; `test_precompiles`'s `precompile_exists_False` case diffs the gas cost of calling a precompile address vs. a plain address). Given the other confirmed gas-accounting divergences in this doc (#1, #2), this is plausibly part of the same general theme — Hedera's gas metering for calls/precompiles doesn't precisely match EVM-spec expectations in edge cases — but the exact mechanism here isn't confirmed.
+
+**Total:** 4 (Hedera-only; not yet checked against Geth)
+
+**Hedera-only — 4 tests**
+```
+tests/frontier/precompiles/test_ecrecover.py::test_repeated_underfunded_calls[fork_Prague-call_opcode_CALL-state_test]
+tests/frontier/precompiles/test_ecrecover.py::test_repeated_underfunded_calls[fork_Prague-call_opcode_CALLCODE-state_test]
+tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000012-precompile_exists_False-state_test]
+tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000000-precompile_exists_False-state_test]
+```
+
+---
+##### 6. Miscellaneous singleton failures — not yet root-caused
+**Pattern:** varies per test; see each below.
+
+- `test_all_opcodes` (the generic "call every opcode's dedicated contract" test): `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` at key `0x00` — the subcall to opcode `0x00`'s (`STOP`-only) contract reports failure, even though a bare `STOP` contract should trivially succeed. Doesn't fit any other pattern in this doc; needs isolated investigation.
+- `test_block_intermediate_state`: `JSONRPCError(code=-32003, message=Transaction rejected: INVALID_ETHEREUM_TRANSACTION)` for a contract-creation (`to: null`) legacy tx with `gas_limit=150_000_000`. Not yet isolated whether the gas limit size, the creation itself, or something else triggers the rejection.
+- `test_valid_reencoded_transaction`: `JSONRPCError(code=-32001, message=Requested resource not found. address '0x...'.)` — the RLP-reencoding baseline test queries an address the relay doesn't know about yet; not yet traced to a specific cause.
+- `test_scenarios` (`program_COINBASE`/`program_NUMBER`/`program_GASLIMIT`, `scenario_STATICCALL_STATICCALL`): expected `COINBASE`/`NUMBER`/`GASLIMIT` values don't match what's read back through a nested `STATICCALL`→`STATICCALL` context — actual values look arbitrary/unrelated (e.g. `98` instead of a real coinbase address), suggesting something specific to nested static calls rather than the opcodes themselves being wrong at top level.
+
+**Total:** 6 (Hedera-only; not yet checked against Geth)
+
+**Hedera-only — 6 tests**
+```
+tests/frontier/opcodes/test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]
+tests/frontier/examples/test_block_intermediate_state.py::test_block_intermediate_state[fork_Prague-blockchain_test]
+tests/frontier/validation/test_transaction_rlp.py::test_valid_reencoded_transaction[fork_Prague-transaction_test]
+tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_COINBASE-debug]
+tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_NUMBER-debug]
+tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug]
+```
+
+---
+##### 7. (Possible test-infra flake, not a confirmed Hedera bug) `test_tx_gas_limit` ERROR
+**Pattern:** `ERROR ... JSONRPCError(code=-32003, message=Transaction rejected: WRONG_NONCE)`
+
+**Root cause:** Not confirmed as a genuine Hedera limitation. The failing transaction's `to` field is the session's own worker/seed key address, not the test's own `to = pre.fund_eoa()` target — this looks like a background funding/sweep transaction from shared session infrastructure hit a nonce race, misattributed to this test in the summary, rather than something about `test_tx_gas_limit`'s own content (which already carries an unrelated `# Run On Hedera` fix for its `gas_price`). Needs an isolated re-run to confirm before treating as a real issue.
+
+**Total:** 1 (unconfirmed)
+
+**Unconfirmed — 1 test**
+```
+tests/frontier/validation/test_transaction.py::test_tx_gas_limit[fork_Prague-blockchain_test]
+```
 
 #### Run Results
 ```
@@ -1052,6 +1170,8 @@ PASSED tests/frontier/validation/test_transaction_rlp.py::test_invalid_signature
 PASSED tests/frontier/validation/test_transaction_rlp.py::test_invalid_signature_values[fork_Prague-transaction_test-v_zero]
 PASSED tests/frontier/validation/test_transaction_rlp.py::test_invalid_signature_values[fork_Prague-transaction_test-v_29]
 PASSED tests/frontier/validation/test_transaction_rlp.py::test_invalid_signature_values[fork_Prague-transaction_test-v_255]
+PASSED tests/frontier/validation/test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_0-expected_exception_None]
+PASSED tests/frontier/validation/test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_1-expected_exception_None]
 SKIPPED [48] tests/frontier/create/test_create_collision.py:123: Pre-alloc modification not supported
 SKIPPED [32] tests/frontier/create/test_create_collision.py:187: Pre-alloc modification not supported
 SKIPPED [3] tests/frontier/create/test_create_collision.py:279: Pre-alloc modification not supported
@@ -1092,12 +1212,10 @@ FAILED tests/frontier/precompiles/test_ecrecover.py::test_repeated_underfunded_c
 FAILED tests/frontier/precompiles/test_ecrecover.py::test_repeated_underfunded_calls[fork_Prague-call_opcode_CALLCODE-state_test] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x6180b0630976d778e631bda813d6c4debeef6cfd for key 0x0000000000000000000000000000000000000000000000000000000000000001: want 0xa (dec:10), got 0x0 (dec:0)
 FAILED tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000012-precompile_exists_False-state_test] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x0a776a7b5dc4a5c6b07bfd26af254dd0d28e41f1 for key 0x0000000000000000000000000000000000000000000000000000000000000000: want 0x1 (dec:1), got 0x0 (dec:0)
 FAILED tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000000-precompile_exists_False-state_test] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x1ed442b0506ed13f8e3f3202a4ab266defe2a72d for key 0x0000000000000000000000000000000000000000000000000000000000000000: want 0x1 (dec:1), got 0x0 (dec:0)
-FAILED tests/frontier/validation/test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_0-expected_exception_None] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32009, message=[Request ID: 90154058-df32-47f9-becd-1eb2fdde8c90] Gas price '10' is below configured minimum gas price '710000000000') Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x0","gas_price":"0xa","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x5208","to":"0xe7c82df5de399abbcab17e5014486016e3200951","value":"0x0","data":"0x","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x1b","r":"0x538216fb2229e643b41ae838c8dd5a7370f9457eabde2166c2f5fd7d286679c3","s":"0x7a266113f7ed47a435ef0940bcda02d0117f3c1ad8ad73134ed0c63861576fad","sender":"0x5a47b55b640ae26f79a3348d2acea16a2a6ca393","authorization_list":null,"initcodes":null,"secret_key":null}
-FAILED tests/frontier/validation/test_transaction.py::test_sender_balance[fork_Prague-blockchain_test-balance_diff_1-expected_exception_None] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32009, message=[Request ID: affb2824-ca69-4a5d-af79-5ee32aa7d95a] Gas price '10' is below configured minimum gas price '710000000000') Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x0","gas_price":"0xa","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x5208","to":"0x16a1cfaf2ed93fbe9cfddba499357e02bafebb6f","value":"0x0","data":"0x","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x1b","r":"0x598ad1d16d907aa366357acb1a04765a695e754cfbb51d3ffae1800391aa9b27","s":"0x152f5afcc1c9d82e55f3f728529304b2d48b0845aa63db801dd741574c1a4f35","sender":"0x28f81b09b9fb66bffcf7e66d613951ca99c9d6dc","authorization_list":null,"initcodes":null,"secret_key":null}
 FAILED tests/frontier/validation/test_transaction_rlp.py::test_valid_reencoded_transaction[fork_Prague-transaction_test] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32001, message=[Request ID: 2ad6244b-e398-47e1-a41f-69d3db22c9b2] Requested resource not found. address '0xC5C8edd472A6FF63090Ac982028C4C2Ab7F350e1'.) Transaction={"rlp_override":null,"ty":"0x0","chain_id":"0x12a","nonce":"0x0","gas_price":"0xa","max_priority_fee_per_gas":null,"max_fee_per_gas":null,"gas_limit":"0x7530","to":"0x2ef7135ef064667faf9594ac031b563e78d267eb","value":"0x2540be400","data":"0x","access_list":null,"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x277","r":"0x86f6ba3e897542c70d08722b4c084bda5a7d5709f50d0f7a0826cda4f6475d4","s":"0x6173cca0511ff7ee5ac0e318d103bd4cd8b82fa9a178ee27bcfbb41d75c5d81a","sender":"0x77f962117539d6e4dda6c8385990c68f52943e40","authorization_list":null,"initcodes":null,"secret_key":null}
 FAILED tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_COINBASE-debug] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x6012773d8a548227a3fde573de262a97d6a82ed9 for key 0x0000000000000000000000000000000000000000000000000000000000000001 (scenario_STATICCALL_STATICCALL): want 0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba (dec:244687034288125203496486448490407391986876152250), got 0x62 (dec:98)
 FAILED tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_NUMBER-debug] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x930291368cc7c289f88418833a2766e09786e259 for key 0x0000000000000000000000000000000000000000000000000000000000000001 (scenario_STATICCALL_STATICCALL): want 0x1 (dec:1), got 0x490e (dec:18702)
 FAILED tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x8c623d7c1f1b69bb149fecadadf1edf7d42b3fba for key 0x0000000000000000000000000000000000000000000000000000000000000001 (scenario_STATICCALL_STATICCALL): want 0x7270e00 (dec:120000000), got 0x10c8e0 (dec:1100000)
 ERROR tests/frontier/validation/test_transaction.py::test_tx_gas_limit[fork_Prague-blockchain_test] - execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32003, message=[Request ID: 6f775ae2-ece6-4f97-bf8c-f50505928aed] Transaction rejected: WRONG_NONCE - receipt for transaction 0.0.2@1791189394.666998147 contained error status WRONG_NONCE) Transaction={"rlp_override":null,"ty":"0x2","chain_id":"0x12a","nonce":"0x0","gas_price":null,"max_priority_fee_per_gas":"0x0","max_fee_per_gas":"0xf920f84c00","gas_limit":"0x5208","to":"0xf70febf7420398c3892ce79fdc393c1a5487ad27","value":"0xac6a6c723f5c00","data":"0x","access_list":[],"max_fee_per_blob_gas":null,"blob_versioned_hashes":null,"v":"0x1","r":"0x530d91ae91abdf90c099d16a52d94d84ada5b390ad5c7b7ea739175afd69fe9e","s":"0x20dd74c4b7a8911051a2eb61b1ba73f9d91bd94fa4016f1954c4e5a1dd85cda3","sender":"0xebaea8068b3cbd2ebb12ffdda4dbe305d491b392","authorization_list":null,"initcodes":null,"secret_key":null}
-============================================================= 35 failed, 1032 passed, 123 skipped, 9 deselected, 1 warning in 17118.65s (4:45:18) =============================================================
+============================================================= 33 failed, 1034 passed, 123 skipped, 9 deselected, 1 warning in 17118.65s (4:45:18) =============================================================
 ```
