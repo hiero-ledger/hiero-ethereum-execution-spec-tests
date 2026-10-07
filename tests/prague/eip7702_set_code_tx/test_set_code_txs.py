@@ -3683,7 +3683,8 @@ def test_empty_authorization_list(
     tx = Transaction(
         # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
         # mode builds a real on-chain deployment tx via Initcode, which
-        # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check.
+        # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+        # `AssertionError: incompatible code type: <class 'bytes'>`
         to=pre.deploy_contract(code=Bytecode()),
         value=0,
         authorization_list=[],

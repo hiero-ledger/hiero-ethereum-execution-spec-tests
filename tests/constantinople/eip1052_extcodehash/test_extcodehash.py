@@ -661,7 +661,10 @@ def test_extcodehash_via_call(
     """
     storage = Storage()
     target_code = b"\x12\x34"
-    # Fixed In Test: execute mode requires `Bytecode`, not raw `bytes`.
+    # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+    # mode builds a real on-chain deployment tx via Initcode, which
+    # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+    # `AssertionError: incompatible code type: <class 'bytes'>`
     target_address = pre.deploy_contract(
         Bytecode(target_code, popped_stack_items=0, pushed_stack_items=0)
     )
@@ -892,7 +895,10 @@ def test_extcodehash_max_code_size(
     """
     storage = Storage()
     target_code = bytes([code_byte] * (fork.max_code_size() - size_delta))
-    # Fixed In Test: execute mode requires `Bytecode`, not raw `bytes`.
+    # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+    # mode builds a real on-chain deployment tx via Initcode, which
+    # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+    # `AssertionError: incompatible code type: <class 'bytes'>`
     target = pre.deploy_contract(
         Bytecode(target_code, popped_stack_items=0, pushed_stack_items=0)
     )
@@ -940,7 +946,10 @@ def test_extcodehash_in_init_code(
     """
     storage = Storage()
     target_code = b"\x11\x22\x33\x44"
-    # Fixed In Test: execute mode requires `Bytecode`, not raw `bytes`.
+    # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+    # mode builds a real on-chain deployment tx via Initcode, which
+    # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+    # `AssertionError: incompatible code type: <class 'bytes'>`
     target = pre.deploy_contract(
         Bytecode(target_code, popped_stack_items=0, pushed_stack_items=0)
     )
@@ -1121,7 +1130,10 @@ def test_extcodehash_dynamic_argument(
         expected_hash = keccak256(b"")
         expected_size = 0
     elif target_type == "contract":
-        # Fixed In Test: execute mode requires `Bytecode`, not raw `bytes`.
+        # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+        # mode builds a real on-chain deployment tx via Initcode, which
+        # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+        # `AssertionError: incompatible code type: <class 'bytes'>`
         target_address = pre.deploy_contract(
             Bytecode(target_code, popped_stack_items=0, pushed_stack_items=0)
         )
