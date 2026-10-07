@@ -97,7 +97,7 @@ def type_3_default_transaction(sender: EOA) -> Transaction:
 def type_4_default_transaction(sender: EOA, pre: Alloc) -> Transaction:
     """Type 4 (set code) default transaction introduced in Prague fork."""
     # Create authorized accounts with funds
-    # Run On Hedera: Adapt funding to wai->tinybar scaling
+    # Run On Hedera: Adapt funding to wei->tinybar scaling
     auth_signer1 = pre.fund_eoa(amount=10**8)
     auth_signer2 = pre.fund_eoa(amount=10**8)
 
