@@ -63,8 +63,9 @@ class TransactionType(IntEnum):
 class TransactionDefaults:
     """Default values for transactions."""
 
-    gas_price: int = 10
-    max_fee_per_gas: int = 7
+    # Run On Hedera: Hedera's current network gas price (710 Gwei, via eth_gasPrice)
+    gas_price: int = 710_000_000_000
+    max_fee_per_gas: int = 710_000_000_000
     max_priority_fee_per_gas: int = 0
 
 
@@ -72,6 +73,13 @@ class AuthorizationTupleGeneric(
     CamelModel, Generic[NumberBoundTypeVar], SignableRLPSerializable
 ):
     """Authorization tuple for transactions."""
+
+    # TODO Fix On Hedera: the relay duplicates `yParity` as `y_parity` or
+    # `yparity` in authorizationList entries, which would otherwise be
+    # rejected as an unexpected extra field. Most likely duplication
+    # happening because of MirrorNode returning the snake_case/lowercase
+    # variant and Relay is not dropping it after formatting.
+    model_config = CamelModel.model_config | {"extra": "ignore"}
 
     chain_id: NumberBoundTypeVar = Field(0)  # type: ignore
     address: Address

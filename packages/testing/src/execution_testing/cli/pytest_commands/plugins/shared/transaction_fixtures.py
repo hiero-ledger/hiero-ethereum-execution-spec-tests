@@ -24,7 +24,9 @@ def type_0_default_transaction(sender: EOA) -> Transaction:
     return Transaction(
         ty=0,
         sender=sender,
-        gas_price=10**9,
+        # Run On Hedera: leave gas_price unset so the execute harness fills
+        # it from the live network gas price. A hardcoded value here can
+        # land far off Hedera's actual gas price
         data=b"\x00" * 100,
         protected=True,
     )
@@ -36,7 +38,9 @@ def type_1_default_transaction(sender: EOA) -> Transaction:
     return Transaction(
         ty=1,
         sender=sender,
-        gas_price=10**9,
+        # Run On Hedera: leave gas_price unset so the execute harness fills
+        # it from the live network gas price. A hardcoded value here can
+        # land far off Hedera's actual gas price
         data=b"\x00" * 100,
         access_list=[
             AccessList(address=0x1234, storage_keys=[0, 1, 2]),
@@ -52,8 +56,11 @@ def type_2_default_transaction(sender: EOA) -> Transaction:
     return Transaction(
         ty=2,
         sender=sender,
-        max_fee_per_gas=10**10,
-        max_priority_fee_per_gas=10**9,
+        # Run On Hedera: leave max_fee_per_gas/max_priority_fee_per_gas unset
+        # so the execute harness fills them from the live network gas price.
+        # A hardcoded low fee cap (e.g. 10 Gwei) is well below Hedera's
+        # actual base fee, so the node rejects the tx with "insufficient
+        # funds" even though the sender is funded for the declared cap.
         data=b"\x00" * 200,
         access_list=[
             AccessList(address=0x2468, storage_keys=[10, 20, 30]),
@@ -90,8 +97,9 @@ def type_3_default_transaction(sender: EOA) -> Transaction:
 def type_4_default_transaction(sender: EOA, pre: Alloc) -> Transaction:
     """Type 4 (set code) default transaction introduced in Prague fork."""
     # Create authorized accounts with funds
-    auth_signer1 = pre.fund_eoa(amount=10**18)
-    auth_signer2 = pre.fund_eoa(amount=10**18)
+    # Run On Hedera: Adapt funding to wei->tinybar scaling
+    auth_signer1 = pre.fund_eoa(amount=10**8)
+    auth_signer2 = pre.fund_eoa(amount=10**8)
 
     # Create target addresses that will be authorized
     target1 = pre.deploy_contract(Op.SSTORE(0, 1))
@@ -100,8 +108,11 @@ def type_4_default_transaction(sender: EOA, pre: Alloc) -> Transaction:
     return Transaction(
         ty=4,
         sender=sender,
-        max_fee_per_gas=10**10,
-        max_priority_fee_per_gas=10**9,
+        # Run On Hedera: leave max_fee_per_gas/max_priority_fee_per_gas unset
+        # so the execute harness fills them from the live network gas price.
+        # A hardcoded low fee cap (e.g. 10 Gwei) is well below Hedera's
+        # actual base fee, so the node rejects the tx with "insufficient
+        # funds" even though the sender is funded for the declared cap.
         data=b"\x00" * 200,
         access_list=[
             AccessList(address=0x4567, storage_keys=[1000, 2000, 3000]),

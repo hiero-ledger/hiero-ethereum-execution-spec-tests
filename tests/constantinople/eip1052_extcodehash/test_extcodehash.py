@@ -661,7 +661,13 @@ def test_extcodehash_via_call(
     """
     storage = Storage()
     target_code = b"\x12\x34"
-    target_address = pre.deploy_contract(target_code)
+    # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+    # mode builds a real on-chain deployment tx via Initcode, which
+    # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+    # `AssertionError: incompatible code type: <class 'bytes'>`
+    target_address = pre.deploy_contract(
+        Bytecode(target_code, popped_stack_items=0, pushed_stack_items=0)
+    )
 
     helper_code = (
         Op.MSTORE(0, Op.EXTCODEHASH(target_address))
@@ -889,7 +895,13 @@ def test_extcodehash_max_code_size(
     """
     storage = Storage()
     target_code = bytes([code_byte] * (fork.max_code_size() - size_delta))
-    target = pre.deploy_contract(target_code)
+    # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+    # mode builds a real on-chain deployment tx via Initcode, which
+    # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+    # `AssertionError: incompatible code type: <class 'bytes'>`
+    target = pre.deploy_contract(
+        Bytecode(target_code, popped_stack_items=0, pushed_stack_items=0)
+    )
 
     code = Op.SSTORE(
         storage.store_next(keccak256(target_code)),
@@ -934,7 +946,13 @@ def test_extcodehash_in_init_code(
     """
     storage = Storage()
     target_code = b"\x11\x22\x33\x44"
-    target = pre.deploy_contract(target_code)
+    # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+    # mode builds a real on-chain deployment tx via Initcode, which
+    # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+    # `AssertionError: incompatible code type: <class 'bytes'>`
+    target = pre.deploy_contract(
+        Bytecode(target_code, popped_stack_items=0, pushed_stack_items=0)
+    )
 
     expected_hash = keccak256(target_code)
     expected_size = len(target_code)
@@ -1112,7 +1130,13 @@ def test_extcodehash_dynamic_argument(
         expected_hash = keccak256(b"")
         expected_size = 0
     elif target_type == "contract":
-        target_address = pre.deploy_contract(target_code)
+        # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+        # mode builds a real on-chain deployment tx via Initcode, which
+        # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+        # `AssertionError: incompatible code type: <class 'bytes'>`
+        target_address = pre.deploy_contract(
+            Bytecode(target_code, popped_stack_items=0, pushed_stack_items=0)
+        )
         expected_hash = keccak256(target_code)
         expected_size = len(target_code)
     elif target_type == "eoa":

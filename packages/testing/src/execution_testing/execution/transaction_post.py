@@ -5,7 +5,7 @@ from typing import ClassVar, Dict, List
 import pytest
 from pytest import FixtureRequest
 
-from execution_testing.base_types import Address, Hash
+from execution_testing.base_types import Address, Hash, Number
 from execution_testing.forks import Fork
 from execution_testing.logging import get_logger
 from execution_testing.rpc import (
@@ -22,7 +22,7 @@ from execution_testing.test_types import (
     TransactionTestMetadata,
 )
 
-from .base import BaseExecute, ExecuteResult
+from .base import BaseExecute, ExecuteResult, scale_sub_tinybar_amount
 
 logger = get_logger(__name__)
 
@@ -77,6 +77,9 @@ class TransactionPost(BaseExecute):
                     max_priority_fee_per_gas=max_priority_fee_per_gas,
                     max_fee_per_blob_gas=max_fee_per_blob_gas,
                 )
+                # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node
+                # scale it up by the wei-per-tinybar rate
+                tx.value = scale_sub_tinybar_amount(Number(tx.value))
 
     def get_required_sender_balances(
         self, *, fork: Fork
@@ -202,6 +205,21 @@ class TransactionPost(BaseExecute):
                     f"{actual_account.nonce}, expected 0."
                 )
             else:
+                if "balance" in expected_account.model_fields_set:
+                    # Run On Hedera: a post-state balance assertion
+                    # may mirror a sub-tinybar placeholder passed to
+                    # `pre.fund_eoa`/`pre.deploy_contract` (e.g.
+                    # `Account(balance=1)`), which the execute harness
+                    # scales up to a whole tinybar before funding.
+                    # Apply the same scaling here so the expectation
+                    # matches the actual (scaled) on-chain balance.
+                    scaled_balance = scale_sub_tinybar_amount(
+                        Number(expected_account.balance)
+                    )
+                    if scaled_balance != expected_account.balance:
+                        expected_account = expected_account.model_copy(
+                            update={"balance": scaled_balance}
+                        )
                 expected_account.check_alloc(address, actual_account)
 
         return ExecuteResult(
