@@ -1201,10 +1201,13 @@ class Alloc(SharedAlloc):
         )
         for tx in self._pending_txs:
             if tx.value is None:
-                # Fixed In Test:
-                # An EOA funded via `pre.fund_eoa()` with no explicit
-                # amount that never sends a transaction of its own has no
-                # entry in `sender_balances` and needs no funding.
+                # Fixed In Test: fixed failure in 'execute' mode.
+                # When `pre.fund_eoa()` was called without an
+                # amount, so the value is derived from what the EOA needs
+                # to send its own transactions (`sender_balances`). An EOA
+                # that never sends a transaction is absent from
+                # `sender_balances`, so default to 0 and fund it with
+                # nothing.
                 sender_balance = sender_balances.get(tx.to, 0)
                 bal_eth = sender_balance / 10**18
                 logger.info(

@@ -7,15 +7,15 @@
 
 # Require Fix On Hedera
 
-1. `authorizationList` entries contain a duplicate snake_case `y_parity` field
+1. (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field
 
    **Root cause:** The relay duplicates `yParity` as an extra snake_case `y_parity` field in `authorizationList` entries, which is otherwise rejected as an unexpected field. Likely because the mirror node returns `y_parity` and the relay doesn't drop it after formatting. Currently worked around client-side by dropping `y_parity` before validation (`packages/testing/src/execution_testing/test_types/transaction_types.py:90`).
 
-2. Returned transaction hash doesn't match the hash computed from the transaction's own RLP data
+2. (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data
 
    **Root cause:** Hedera has a bug that prevents the transaction hash it returns for a submitted transaction from matching the hash calculated from that transaction's own RLP encoding. The `assert self.transaction_hash == self.hash` check is disabled (replaced with a `print` warning) to work around this (`packages/testing/src/execution_testing/rpc/rpc_types.py:156`).
 
-3. Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing
+3. (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing
 
    **Root cause:** The local Hedera node's JSON-RPC relay doesn't handle multiple same-sender transactions submitted in one JSON-RPC batch call reliably — it races on nonce sequencing when 2+ transactions from the same account arrive together, causing "nonce too low"/"nonce too high" depending on timing. Sending them one at a time (waiting for each to land in a block before sending the next) sidesteps the race entirely.
 
@@ -45,7 +45,7 @@
 
    Workaround: add `--max-tx-per-batch=1`.
 
-4. Head block's reported `gasLimit` doesn't match the configured environment gas limit
+4. (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit
 
    **Root cause:** The local Hedera node's head block reports a fixed `gasLimit` of `0x8f0d180` (150,000,000), regardless of the `--env-gas-limit` value passed to `execute remote` (e.g. `15000000`). The chain's actual block gas limit isn't adjustable via that flag, so tests relying on the environment gas limit matching the real network's block gas limit see a mismatch.
 
@@ -57,7 +57,7 @@
    {"jsonrpc":"2.0","result":{"timestamp":"0x6ab11f16","difficulty":"0x0","extraData":"0x","gasLimit":"0x8f0d180","baseFeePerGas":"0xa54f4c3c00","gasUsed":"0x0","logsBloom":"0x0...0","miner":"0x0...0","mixHash":"0x0...0","nonce":"0x0000000000000000","receiptsRoot":"0x0...0","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x251","stateRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","totalDifficulty":"0x0","transactions":[],"transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","uncles":[],"withdrawals":[],"withdrawalsRoot":"0x0...0","number":"0x268d","hash":"0xc4f9131e5f230b182bde83dbd5199a263cb20252e1d1d46387064d5a81dc78f9","parentHash":"0x5885d271d77e19ffd3d00a18239a8980b58328f3f49f98d6700f642b793fc37f"},"id":1}
    ```
 
-5. Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
+5. (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
 
    **Root cause:** `DataBufferMarshaller` (`hedera-node/hedera-app/.../grpc/impl/netty/DataBufferMarshaller.java`) caches its read buffer in a **`static`** `ThreadLocal<BufferedData>`. The consensus node constructs two separate `DataBufferMarshaller` instances with different capacities — a small one for regular transactions (`MAX_TRANSACTION_SIZE + 1` = 133,121 bytes) and a large one for jumbo transactions (`jumboMaxTxnSize + 1`, e.g. 9,000,002 bytes) — but because the `ThreadLocal` field is `static`, both instances share the same per-thread cached buffer. gRPC dispatches calls across a shared Netty worker-thread pool, not partitioned by method, so on most worker threads a small/regular call (queries, node signature transactions, small `EthereumTransaction`s) runs first and permanently caches a 133,121-byte `ByteBuffer` for that thread — `ByteBuffer` capacity is fixed at allocation and `reset()` only rewinds position, it can't grow it.
 
