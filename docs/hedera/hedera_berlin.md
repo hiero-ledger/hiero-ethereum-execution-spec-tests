@@ -2,7 +2,7 @@
 
 ### Run
 ```bash
-uv run execute remote -rA -v --fork=Prague \
+uv run execute remote -rA -vv --fork=Prague \
     --rpc-endpoint=http://localhost:37546/ \
     --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
     --rpc-chain-id=298 \

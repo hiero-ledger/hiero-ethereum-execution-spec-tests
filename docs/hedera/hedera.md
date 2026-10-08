@@ -11,9 +11,37 @@
 
    **Root cause:** The relay duplicates `yParity` as an extra snake_case `y_parity` field in `authorizationList` entries, which is otherwise rejected as an unexpected field. Likely because the mirror node returns `y_parity` and the relay doesn't drop it after formatting. Currently worked around client-side by dropping `y_parity` before validation (`packages/testing/src/execution_testing/test_types/transaction_types.py:90`).
 
+   **Reproducer:** Comment the `model_config = CamelModel.model_config | {"extra": "ignore"}` under "# TODO Fix On Hedera: the relay duplicates `yParity` as `y_parity`" comment at `packages/testing/src/execution_testing/test_types/transaction_types.py`
+   Execute: (it is failing for most of the `tests/prague/eip7702_set_code_tx/test_set_code_txs.py` tests) For example:
+    ```bash
+    uv run execute remote -rA -vv --fork=Prague \
+        --rpc-endpoint=http://localhost:37546/ \
+        --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
+        --rpc-chain-id=298 \
+        --seed-account-sweep-amount='1_000_000 ether' \
+        --default-max-fee-per-blob-gas=710_000_000_000 \
+        --tx-wait-timeout=15 \
+        --max-tx-per-batch=1 \
+        "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-stop-tx_value_0]"
+    ```
+
 2. (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data
 
    **Root cause:** Hedera has a bug that prevents the transaction hash it returns for a submitted transaction from matching the hash calculated from that transaction's own RLP encoding. The `assert self.transaction_hash == self.hash` check is disabled (replaced with a `print` warning) to work around this (`packages/testing/src/execution_testing/rpc/rpc_types.py:156`).
+
+   **Reproducer:** Uncomment the `assert self.transaction_hash == self.hash` under "# TODO Fix On Hedera: the hash calculated by the test client from the" comment at `packages/testing/src/execution_testing/rpc/rpc_types.py`
+   Execute: is it failing for a lot of the tests, for example:
+   ```bash
+   uv run execute remote -rA -vv --fork=Prague \
+      --rpc-endpoint=http://localhost:37546/ \
+      --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
+      --rpc-chain-id=298 \
+      --seed-account-sweep-amount='1_000_000 ether' \
+      --default-max-fee-per-blob-gas=710_000_000_000 \
+      --tx-wait-timeout=15 \
+      --max-tx-per-batch=1 \
+      "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption[fork_Prague-state_test-extra_gas-type_4]"
+   ```
 
 3. (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing
 
@@ -22,7 +50,7 @@
    Example:
     1. frontier
    ```bash
-   uv run execute remote -rA --verbose --fork=Prague \
+   uv run execute remote -rA --vv --fork=Prague \
        --rpc-endpoint=http://localhost:37546/ \
        --rpc-seed-key=0x748634984b480c75456a68ea88f31609cd3091e012e2834948a6da317b727c04 \
        --rpc-chain-id=298 \
@@ -33,7 +61,7 @@
    ```
    2. prague
     ```bash
-    uv run execute remote -rA -v --fork=Prague \                                           
+    uv run execute remote -rA -vv --fork=Prague \                                           
         --rpc-endpoint=http://localhost:37546/ \
         --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
         --rpc-chain-id=298 \
@@ -67,7 +95,7 @@
 
    Repro:
    ```bash
-   uv run execute remote -rA -v --fork=Prague \
+   uv run execute remote -rA -vv --fork=Prague \
        --rpc-endpoint=http://localhost:37546/ \
        --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
        --rpc-chain-id=298 \

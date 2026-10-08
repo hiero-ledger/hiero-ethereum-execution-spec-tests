@@ -989,7 +989,6 @@ def test_set_code_call_set_code(
                 balance=(0 if call_opcode == Op.CALL else value)
                 + auth_account_start_balance,
             ),
-            # TODO Glib, fix balance check
             auth_signer_2: Account(
                 nonce=1,
                 code=Spec.delegation_designation(set_code_to_address_2),
