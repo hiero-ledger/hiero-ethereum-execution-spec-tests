@@ -8,6 +8,8 @@
 # Require Fix On Hedera
 
 1. (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field
+    
+   **Issue:** https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858
 
    **Root cause:** The relay duplicates `yParity` as an extra snake_case `y_parity` field in `authorizationList` entries, which is otherwise rejected as an unexpected field. Likely because the mirror node returns `y_parity` and the relay doesn't drop it after formatting. Currently worked around client-side by dropping `y_parity` before validation (`packages/testing/src/execution_testing/test_types/transaction_types.py:90`).
 
