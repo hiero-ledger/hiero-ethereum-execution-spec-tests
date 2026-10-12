@@ -52,7 +52,7 @@
    Example:
     1. frontier
    ```bash
-   uv run execute remote -rA --vv --fork=Prague \
+   uv run execute remote -rA -vv --fork=Prague \
        --rpc-endpoint=http://localhost:37546/ \
        --rpc-seed-key=0x748634984b480c75456a68ea88f31609cd3091e012e2834948a6da317b727c04 \
        --rpc-chain-id=298 \
