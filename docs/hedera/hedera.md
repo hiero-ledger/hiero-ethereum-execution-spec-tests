@@ -29,6 +29,8 @@
 
 2. (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data
 
+   **Issue:** https://github.com/hiero-ledger/hiero-consensus-node/issues/27580
+
    **Root cause:** Hedera has a bug that prevents the transaction hash it returns for a submitted transaction from matching the hash calculated from that transaction's own RLP encoding. The `assert self.transaction_hash == self.hash` check is disabled (replaced with a `print` warning) to work around this (`packages/testing/src/execution_testing/rpc/rpc_types.py:156`).
 
    **Reproducer:** Uncomment the `assert self.transaction_hash == self.hash` under "# TODO Fix On Hedera: the hash calculated by the test client from the" comment at `packages/testing/src/execution_testing/rpc/rpc_types.py`
@@ -63,7 +65,7 @@
    ```
    2. prague
     ```bash
-    uv run execute remote -rA -vv --fork=Prague \                                           
+    uv run execute remote -rA -vv --fork=Prague \
         --rpc-endpoint=http://localhost:37546/ \
         --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
         --rpc-chain-id=298 \
@@ -88,6 +90,8 @@
    ```
 
 5. (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
+
+   **Issue:** https://github.com/hiero-ledger/hiero-consensus-node/issues/27581
 
    **Root cause:** `DataBufferMarshaller` (`hedera-node/hedera-app/.../grpc/impl/netty/DataBufferMarshaller.java`) caches its read buffer in a **`static`** `ThreadLocal<BufferedData>`. The consensus node constructs two separate `DataBufferMarshaller` instances with different capacities — a small one for regular transactions (`MAX_TRANSACTION_SIZE + 1` = 133,121 bytes) and a large one for jumbo transactions (`jumboMaxTxnSize + 1`, e.g. 9,000,002 bytes) — but because the `ThreadLocal` field is `static`, both instances share the same per-thread cached buffer. gRPC dispatches calls across a shared Netty worker-thread pool, not partitioned by method, so on most worker threads a small/regular call (queries, node signature transactions, small `EthereumTransaction`s) runs first and permanently caches a 133,121-byte `ByteBuffer` for that thread — `ByteBuffer` capacity is fixed at allocation and `reset()` only rewinds position, it can't grow it.
 
