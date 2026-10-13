@@ -1,8 +1,39 @@
+# Require Fix On Hedera
+
+## Summary 
+
+| # | Title | Status | Issue |
+|---|---|---|---|
+
+
+## Details
+| 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Awaiting Validation | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) |
+| 2 | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data | Issue | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580) |
+| 3 | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing | Awaiting Validation | — |
+| 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Triage | — |
+| 5 | (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException` | Issue | [hiero-ledger/hiero-consensus-node#27581](https://github.com/hiero-ledger/hiero-consensus-node/issues/27581) |
+| 6 | (CN) `BALANCE`, `SELFBALANCE` and `CALLVALUE` opcodes return values in tinybar instead of wei | Issue | [hiero-ledger/hiero-consensus-node#27582](https://github.com/hiero-ledger/hiero-consensus-node/issues/27582) |
+| 7 | (CN?) SELFDESTRUCT does not apply when triggered via internal CALL/CALLCODE/DELEGATECALL or during init code | Triage | — |
+| 8 | (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure | Triage | — |
+| 9 | (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera | Triage | — |
+| 10 | (CN?) Warm-access gas cost not honored — repeat accesses (EIP-2929) and coinbase pre-warming (EIP-3651) | Triage | — |
+| 11 | (CN?) BLOCKHASH returns 0 for genesis/recent blocks | Triage | — |
+| 12 | (CN?) CALL with a nonzero value to a precompile address fails | Triage | — |
+| 13 | (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement | Triage | — |
+| 14 | Miscellaneous singleton failures — not yet root-caused | Triage | — |
+| 15 | (Possible test-infra flake, not a confirmed Hedera bug) `test_tx_gas_limit` ERROR | Triage | — |
+| 16 | (CN?) Out-of-gas transaction does not consume the full declared gas_limit | Triage | — |
+| 17 | (Relay?) RPC rejects transaction — invalid yParity (-32000) | Triage | — |
+| 18 | (Relay?) Zero-value r/s in authorization tuple serialized as empty '0x' | Triage | — |
+| 19 | (CN?) Call to EIP-7702-delegated EOA rejected as INVALID_CONTRACT_ID | Triage | — |
+| 20 | (Relay caching?) EIP-7702 authorization tuple does not bump authority nonce | Triage | — |
+| 21 | (CN?) EIP-7702 authorization tuple does not write delegation designation code | Triage | — |
+| 22 | (CN?) Delegated EOA used as transaction sender is not found as an existing account | Triage | — |
 
 ---
 1. ▶️ ️(Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field
 
-   **Status:** Fix Validation: https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858
+   **Status:** Awaiting Validation: https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858
 
    **Root cause:** The relay duplicates `yParity` as an extra snake_case `y_parity` field in `authorizationList` entries, which is otherwise rejected as an unexpected field. Likely because the mirror node returns `y_parity` and the relay doesn't drop it after formatting. Currently worked around client-side by dropping `y_parity` before validation (`packages/testing/src/execution_testing/test_types/transaction_types.py:90`).
 
@@ -141,14 +172,29 @@
    Marked in the tests with `# TODO Fix On Hedera: BALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar` (`tests/prague/eip7702_set_code_tx/test_set_code_txs.py:1689`).
 
 ---
-7. (CN?) SELFDESTRUCT does not apply when triggered via internal CALL or during init code
-    **Pattern:** `Account.NonceMismatchError: Nonce of 0x...: is 0x01, expected 0.` / `Account.CodeMismatchError: Code of 0x...: is 0x<code>, expected 0x.` / `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` (cascading from the account not being deleted) / `test_constant_gas[SELFDESTRUCT]`'s own gas measurement reading `0` instead of the expected cold-beneficiary cost.
-    
-    **Root cause:** Same family as [hedera_constantinople.md #1](hedera_constantinople.md#1-cn-selfdestruct-via-internal-callcallcodedelegatecall-does-not-apply-on-hedera). `test_create_suicide_during_transaction_create` runs `SELFDESTRUCT` directly inside a `CREATE`/`CREATE2`'s init code; `test_create_suicide_store` creates a contract then triggers its `SELFDESTRUCT` via a separate internal `CALL`. Both expect the account to end up `Account.NONEXISTENT`, but it persists (nonce/code unchanged). `test_constant_gas[SELFDESTRUCT]` tries to measure `SELFDESTRUCT`'s own gas cost (expects the cold-beneficiary surcharge, `7600`) but reads `0`, consistent with the operation not actually being applied.
-    
-    **Total:** 9 (Hedera-only; not yet checked against Geth)
-    
-    **Hedera-only — 9 tests**
+7. (CN?) SELFDESTRUCT does not apply when triggered via internal CALL/CALLCODE/DELEGATECALL or during init code
+    **Note:** The EIP-150 matrix (group B) shows a lot of similar failures on Hedera and GETH
+
+    **Pattern:** `Account.NonceMismatchError: unexpected nonce ...` / `Account.BalanceMismatchError: unexpected balance ...` (including beneficiary addresses labeled by precompile/system-contract name, e.g. `(RIPEMD160)`, `(BLS12_G1ADD)`, `(BEACON_ROOTS_ADDRESS)`; or `want 0x00, got 0x02540be400`, i.e. 1 tinybar left over) / `Account.CodeMismatchError` / `AssertionError: Code of 0x...: is 0x<code>, expected 0x.` / `AssertionError: Balance of 0x...: is 0x<n>, expected 0.` / `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` (cascading from the account not being deleted) / `test_constant_gas[SELFDESTRUCT]`'s own gas measurement reading `0` instead of the expected cold-beneficiary cost (`7600`).
+
+    **Root cause:**Whenever `SELFDESTRUCT` is executed anywhere other than a direct top-level call — via an internal `CALL`/`CALLCODE`/`DELEGATECALL` (at any nesting depth) or directly inside a `CREATE`/`CREATE2`'s init code — Hedera accepts and mines the transaction but silently no-ops the `SELFDESTRUCT`: the victim's nonce/code/balance are left untouched and the beneficiary never receives the transferred balance. The tests expect the account to end up `Account.NONEXISTENT` (or, post-EIP-6780 for a pre-existing account, at least have its balance drained to 0).
+
+    Sub-groups (same cause, different tests):
+    - **A. Frontier create/opcode tests.** `test_create_suicide_during_transaction_create` runs `SELFDESTRUCT` directly inside a `CREATE`/`CREATE2`'s init code; `test_create_suicide_store` creates a contract then triggers its `SELFDESTRUCT` via a separate internal `CALL`; `test_constant_gas[SELFDESTRUCT]` reads `0` instead of the cold-beneficiary surcharge, consistent with the operation not being applied.
+    - **B. EIP-150 combinatorial matrix.** Every failing test deploys a `victim` contract whose code is `Op.SELFDESTRUCT(beneficiary)` and triggers it via an internal `Op.CALL(gas=inner_call_gas, address=victim)` from a separate `caller` contract (`test_selfdestruct_to_account`, `test_selfdestruct_to_precompile`, `test_selfdestruct_to_system_contract`, `test_selfdestruct_to_self`, and their `_state_access_boundary` variants), or — for `test_initcode_selfdestruct_to_self` — triggers `SELFDESTRUCT(ADDRESS)` directly inside `CREATE`'s init code. Hedera leaves the victim untouched for the "exact_gas" (success) parametrizations across every beneficiary type (EOA, contract, each precompile, each system contract, self).
+    - **C. EIP-1052 `EXTCODEHASH` tests.** The target's runtime code ends in `SELFDESTRUCT`, triggered via an internal `CALL` (e.g. `code += Op.CALL(address=target, gas=100_000)` / `trigger(address=target, gas=0x10000)`) — including when nested an extra frame deep (`test_extcodehash_created_and_deleted_recheck_outer`'s outer contract `CALL`s an inner contract that itself `CALL`s the self-destructing target), and when reached via `CALLCODE`/`DELEGATECALL` so `SELFDESTRUCT` executes in the *caller's* own context (`test_extcodehash_subcall_selfdestruct`).
+    - **D. EIP-7702 same-transaction deploy.** In `test_set_code_to_self_destructing_account_deployed_in_same_tx`, the transaction's top-level target is `contract_creator_address`, which internally `CREATE`s a new contract and then issues a nested `CALL` into it, and that nested call runs the `SELFDESTRUCT`. A contract both `CREATE`d and `SELFDESTRUCT`ed within the same transaction (fully wiped per EIP-6780) still has its deployed code after the transaction is mined successfully. Confirmed independent of two other candidate explanations by testing all four combinations of `balance` (`0` / `10_000_000_000`) × `external_sendall_recipient` (`False` / `True`):
+
+      | `balance` | `external_sendall_recipient` | beneficiary funded on-chain? | result |
+      |---|---|---|---|
+      | `0` | `False` (recipient = `auth_signer`) | no | code not wiped |
+      | `0` | `True` (recipient = separate EOA) | no | code not wiped |
+      | `10000000000` | `True` (recipient = separate EOA) | no | code not wiped |
+      | `10000000000` | `False` (recipient = `auth_signer`) | **yes** | code not wiped |
+
+    **Total:** 458 (Hedera-only; not yet checked against Geth): A = 9, B = 437 unique test IDs across 7 test functions (`test_selfdestruct_to_precompile` (187), `test_selfdestruct_to_precompile_state_access_boundary` (170), `test_selfdestruct_to_account` (29), `test_selfdestruct_state_access_boundary` (27), `test_selfdestruct_to_system_contract` (20), `test_selfdestruct_to_self` (3), `test_initcode_selfdestruct_to_self` (1)), C = 8, D = 4 confirmed (all combinations of `balance` × `external_sendall_recipient` for `create_opcode_CREATE-call_set_code_first_False`; full-suite count not yet determined).
+
+    **Hedera-only — A. Frontier (9 tests)**
     ```
     tests/frontier/create/test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE2-state_test-operation_Operation.SUICIDE-transaction_create_False]
     tests/frontier/create/test_create_suicide_during_init.py::test_create_suicide_during_transaction_create[fork_Prague-create_opcode_CREATE2-state_test-operation_Operation.SUICIDE_TO_ITSELF-transaction_create_False]
@@ -161,15 +207,77 @@
     tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-SELFDESTRUCT-state_test]
     ```
 
+    **Hedera-only — B. EIP-150 (7 test functions, 437 parametrized tests total)**
+    ```
+    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_initcode_selfdestruct_to_self...
+    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_state_access_boundary...
+    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_account...
+    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_precompile...
+    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_precompile_state_access_boundary...
+    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_self...
+    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_system_contract...
+    ```
+
+    **Hedera-only — C. EXTCODEHASH (8 tests)**
+    ```
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-create]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-create2]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted[fork_Prague-state_test-call]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted_recheck_outer[fork_Prague-state_test]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-pre_existing-callcode]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-pre_existing-delegatecall]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-dynamic-callcode]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-dynamic-delegatecall]
+    ```
+
+    **Hedera-only — D. EIP-7702 (4 tests confirmed)**
+    ```
+    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destructing_account_deployed_in_same_tx[fork_Prague-state_test-create_opcode_CREATE-call_set_code_first_False-balance_0-external_sendall_recipient_False]
+    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destructing_account_deployed_in_same_tx[fork_Prague-state_test-create_opcode_CREATE-call_set_code_first_False-balance_0-external_sendall_recipient_True]
+    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destructing_account_deployed_in_same_tx[fork_Prague-state_test-create_opcode_CREATE-call_set_code_first_False-balance_10000000000-external_sendall_recipient_True]
+    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destructing_account_deployed_in_same_tx[fork_Prague-state_test-create_opcode_CREATE-call_set_code_first_False-balance_10000000000-external_sendall_recipient_False]
+    ```
+
 ---
-8. (CN?) Address/call warm-access cost not honored — broader than coinbase pre-warming
+8. (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure
+    **Pattern:** `execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x...: want 0x1 (dec:1), got 0x0 (dec:0)` — the call's own success flag, stored via `Op.SSTORE(slot, call_opcode(address=target))`.
+    
+    **Root cause:** Related to [#7](#7-cn-selfdestruct-does-not-apply-when-triggered-via-internal-callcallcodedelegatecall-or-during-init-code) but a distinct symptom. `target`'s entire body is `Op.SELFDESTRUCT(beneficiary)`; calling into it with `CALL`, `CALLCODE`, or `DELEGATECALL` should trivially succeed per spec (`call_succeeds = call_opcode != Op.STATICCALL`). On Hedera the call itself reports failure (return value `0`) instead of succeeding — unlike #7's cases, where the call succeeds within the transaction and only the *end-of-transaction* account deletion/balance-drain is silently skipped. Here the failure is visible immediately via the call's own return value, for all three non-static call opcodes.
+    
+    **Total:** 3 (Hedera-only; not yet checked against Geth)
+    
+    **Hedera-only — 3 tests**
+    ```
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_CALL-state_test]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_CALLCODE-state_test]
+    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_DELEGATECALL-state_test]
+    ```
+
+---
+9. (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera
+    **Pattern:** `execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32003, message=Transaction rejected: INVALID_SOLIDITY_ADDRESS - receipt for transaction ... contained error status INVALID_SOLIDITY_ADDRESS)`.
+    
+    **Root cause:** `test_set_code_to_self_destruct`'s `external_sendall_recipient_True` variants set `recipient = pre.fund_eoa(0)` (`test_set_code_txs.py:515`). Because the amount is `0`, `_fund_eoa` (`pre_alloc.py:710-718`) never sends a funding transaction for it, so `recipient` has no footprint on the Hedera ledger. When the delegated contract executes `SELFDESTRUCT(recipient)`, Hedera rejects the transaction outright with `INVALID_SOLIDITY_ADDRESS` instead of crediting the balance — the beneficiary of a `SELFDESTRUCT` must already exist as an account on Hedera. This reproduces identically regardless of `auth_signer`'s own balance (`balance_0` and `balance_10000000000` both fail the same way), confirming `recipient`'s non-existence — not `auth_signer`'s — is the trigger. This is a different mechanism from [#19](#19-call-to-eip-7702-delegated-eoa-rejected-as-invalid_contract_id) (which is about calling directly into an already-delegated EOA, not about a SELFDESTRUCT beneficiary).
+    
+    **Total:** 2 (Hedera-only; not yet checked against Geth)
+    
+    **Hedera-only — 2 tests**
+    ```
+    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destruct[fork_Prague-state_test-balance_0-external_sendall_recipient_True]
+    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destruct[fork_Prague-state_test-balance_10000000000-external_sendall_recipient_True]
+    ```
+
+---
+10. (CN?) Warm-access gas cost not honored — repeat accesses (EIP-2929) and coinbase pre-warming (EIP-3651)
     **Pattern:** `Storage.KeyValueMismatchError: ... want 0x64 (100), got 0xa28 (2600)` (numeric cost reads cold instead of warm) — or `want 0x1, got 0x0` for the `CALL`-family opcodes, where the measurement call itself fails/runs out of gas because it was only given the warm-cost gas allowance.
-    
-    **Root cause:** Related to [hedera_shanghai.md #1](hedera_shanghai.md#1-cn-coinbase-address-is-not-pre-warmed-eip-3651) but broader — that entry is specifically about `COINBASE` under EIP-3651; this one is `test_constant_gas` measuring generic EIP-2929 warm/cold access for `BALANCE`/`EXTCODESIZE`/`EXTCODECOPY`/`EXTCODEHASH`/`CALLCODE`/`DELEGATECALL`/`STATICCALL`, where the test's own `setup_code` already accesses the address once (making it warm for the measured second access). On Hedera the second access still costs the cold price (`2600` instead of `100`), suggesting EIP-2929 access-list warming isn't honored for repeat accesses within a transaction, not just for the EIP-3651 coinbase case.
-    
-    **Total:** 7 (Hedera-only; not yet checked against Geth)
-    
-    **Hedera-only — 7 tests**
+
+    **Root cause:** Same underlying gap in two forms: Hedera charges the cold access price (`2600`, or ~`2855` for the `CALL`-family once their own overhead is included) where the warm price (`100`) is expected, so access-list warming isn't honored. Related to [hedera_shanghai.md #1](hedera_shanghai.md#1-cn-coinbase-address-is-not-pre-warmed-eip-3651).
+    - **A. Repeat access (EIP-2929).** `test_constant_gas` measures generic warm/cold access for `BALANCE`/`EXTCODESIZE`/`EXTCODECOPY`/`EXTCODEHASH`/`CALLCODE`/`DELEGATECALL`/`STATICCALL`, where the test's own `setup_code` already accesses the address once (making it warm for the measured second access). On Hedera the second access still costs the cold price, suggesting warming isn't honored for repeat accesses within a transaction.
+    - **B. Coinbase (EIP-3651).** EIP-3651 (Warm Coinbase, active since Shanghai) requires the `COINBASE` address to be added to the access list at the start of transaction execution, so the first `EXTCODESIZE`/`EXTCODECOPY`/`EXTCODEHASH`/`BALANCE`/`CALL`-family access to it costs the warm price. `test_warm_coinbase_gas_usage` measures this cost directly and expects the warm price on Prague (`fork >= Shanghai`), but measures the cold price — Hedera isn't pre-warming the coinbase address. `test_warm_coinbase_call_out_of_gas`'s `sufficient_gas` variants independently confirm this: they provide exactly enough gas for a warm-cost call to succeed, and the call fails (runs OOG) because Hedera charges the cold price instead.
+
+    **Total:** 19 (Hedera-only; not yet checked against Geth): A = 7; B = 12 — all 8 `test_warm_coinbase_gas_usage` opcodes, plus the 4 `test_warm_coinbase_call_out_of_gas` `sufficient_gas` variants. The matching `insufficient_gas` variants pass (both warm and cold accounting equally run out of gas there, so the distinction doesn't surface).
+
+    **Hedera-only — A. Repeat access (7 tests)**
     ```
     tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-BALANCE-state_test]
     tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-EXTCODESIZE-state_test]
@@ -178,10 +286,28 @@
     tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-CALLCODE-state_test]
     tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-DELEGATECALL-state_test]
     tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-STATICCALL-state_test]
+    
+    ```
+
+    **Hedera-only — B. Coinbase (12 tests)**
+    ```
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODESIZE]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODECOPY]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODEHASH]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-BALANCE]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-CALL]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-CALLCODE]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-DELEGATECALL]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-STATICCALL]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-CALL-sufficient_gas]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-CALLCODE-sufficient_gas]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-DELEGATECALL-sufficient_gas]
+    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-STATICCALL-sufficient_gas]
+    
     ```
 
 ---
-9. (CN?) BLOCKHASH returns 0 for genesis/recent blocks
+11. (CN?) BLOCKHASH returns 0 for genesis/recent blocks
     **Pattern:** `Storage.KeyValueMismatchError: ... want 0x0, got 0x1` — storing `ISZERO(BLOCKHASH(n))`, expecting `0` (hash present) but getting `1` (hash absent/zero).
     
     **Root cause:** `test_genesis_hash_available` expects `BLOCKHASH(0)` (genesis) and `BLOCKHASH(1)` to return a real, nonzero hash when queried from a later block. On Hedera both return `0`, across all four setup variants (no blocks, one empty block, one block with a tx, 256 empty blocks) — suggesting Hedera doesn't populate `BLOCKHASH` for genesis or otherwise returns `0` where a real hash is expected.
@@ -197,7 +323,7 @@
     ```
 
 ---
-10. (CN?) CALL with a nonzero value to a precompile address fails
+12. (CN?) CALL with a nonzero value to a precompile address fails
     **Pattern:** `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` — a `CALL`/`CALLCODE` sending value to the identity precompile (`0x04`), expected to succeed, but the call fails.
     
     **Root cause:** Not the sub-tinybar floor — already ruled out. The test's `value` is already exactly 1 tinybar (`0x2540BE400`), and the caller contract's balance is scaled to match exactly (confirmed via the deploy log: `balance=0.000000010000000000 ETH`). Bumping the caller's balance to 2 tinybar (so balance > value with margin) still fails identically; bumping the call's `gas` from `0x30D40` to `1_000_000` also still fails identically. Both "insufficient balance" and "insufficient gas" are ruled out. The only thing distinguishing this from the passing `identity_1`/`identity_2`/etc. variants in the same file is that it sends a *nonzero value* to a *precompile address* — pointing to Hedera not supporting value transfers to precompile addresses via `CALL`/`CALLCODE` at all, independent of amount, balance, or gas. No test-side parameter fix found.
@@ -211,7 +337,7 @@
     ```
 
 ---
-11. (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement
+13. (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement
     **Pattern:** `Storage.KeyValueMismatchError: ... want 0xa (10), got 0x0` (underfunded-call loop never records expected failures) / `want 0x1, got 0x0` (gas-usage-difference check between a precompile and a reference address).
     
     **Root cause:** Not fully traced — both tests rely on exact-to-the-gas-unit accounting (`test_repeated_underfunded_calls` forwards precompile gas minus exactly 1; `test_precompiles`'s `precompile_exists_False` case diffs the gas cost of calling a precompile address vs. a plain address). Given the other confirmed gas-accounting divergences in this doc (#1, #2), this is plausibly part of the same general theme — Hedera's gas metering for calls/precompiles doesn't precisely match EVM-spec expectations in edge cases — but the exact mechanism here isn't confirmed.
@@ -227,7 +353,7 @@
     ```
 
 ---
-12. Miscellaneous singleton failures — not yet root-caused
+14. Miscellaneous singleton failures — not yet root-caused
     
     **Pattern:** varies per test; see each below.
     ```
@@ -250,7 +376,7 @@
     ```
 
 ---
-13. (Possible test-infra flake, not a confirmed Hedera bug) `test_tx_gas_limit` ERROR
+15. (Possible test-infra flake, not a confirmed Hedera bug) `test_tx_gas_limit` ERROR
     **Pattern:** `ERROR ... JSONRPCError(code=-32003, message=Transaction rejected: WRONG_NONCE)`
     
     **Root cause:** Not confirmed as a genuine Hedera limitation. The failing transaction's `to` field is the session's own worker/seed key address, not the test's own `to = pre.fund_eoa()` target — this looks like a background funding/sweep transaction from shared session infrastructure hit a nonce race, misattributed to this test in the summary, rather than something about `test_tx_gas_limit`'s own content (which already carries an unrelated `# Run On Hedera` fix for its `gas_price`). Needs an isolated re-run to confirm before treating as a real issue.
@@ -263,87 +389,7 @@
     ```
 
 ---
-14. (CN?) SELFDESTRUCT via internal CALL/CREATE does not apply on Hedera
-    **Note:** A lot of similar failures on Hedera and GETH
-    
-    **Pattern:** `Account.NonceMismatchError: unexpected nonce ...` / `Account.BalanceMismatchError: unexpected balance ...` (including beneficiary addresses labeled by precompile/system-contract name, e.g. `(RIPEMD160)`, `(BLS12_G1ADD)`, `(BEACON_ROOTS_ADDRESS)`) / `AssertionError: Code of 0x...: is 0x<code>, expected 0x.` / `AssertionError: Balance of 0x...: is 0x<n>, expected 0.`
-    
-    **Root cause:** Same family as [hedera_constantinople.md #1](hedera_constantinople.md#1-cn-selfdestruct-via-internal-callcallcodedelegatecall-does-not-apply-on-hedera) and [hedera_frontier.md #1](hedera_frontier.md#1-cn-selfdestruct-does-not-apply-when-triggered-via-internal-call-or-during-init-code), now covering this file's entire SELFDESTRUCT combinatorial matrix. Every failing test deploys a `victim` contract whose code is `Op.SELFDESTRUCT(beneficiary)` and triggers it via an internal `Op.CALL(gas=inner_call_gas, address=victim)` from a separate `caller` contract (`test_selfdestruct_to_account`, `test_selfdestruct_to_precompile`, `test_selfdestruct_to_system_contract`, `test_selfdestruct_to_self`, and their `_state_access_boundary` variants), or — for `test_initcode_selfdestruct_to_self` — triggers `SELFDESTRUCT(ADDRESS)` directly inside `CREATE`'s init code. In every case Hedera leaves the victim's nonce/code/balance untouched and the beneficiary never receives the transferred balance, instead of applying the deletion/transfer the tests expect for the "exact_gas" (success) parametrizations across every beneficiary type (EOA, contract, each precompile, each system contract, self).
-    
-    **Total:** 437 unique test IDs (Hedera-only; not yet checked against Geth) across 7 test functions: `test_selfdestruct_to_precompile` (187), `test_selfdestruct_to_precompile_state_access_boundary` (170), `test_selfdestruct_to_account` (29), `test_selfdestruct_state_access_boundary` (27), `test_selfdestruct_to_system_contract` (20), `test_selfdestruct_to_self` (3), `test_initcode_selfdestruct_to_self` (1).
-    
-    **Hedera-only — 7 test functions (437 parametrized tests total)**
-    ```
-    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_initcode_selfdestruct_to_self...
-    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_state_access_boundary...
-    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_account...
-    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_precompile...
-    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_precompile_state_access_boundary...
-    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_self...
-    tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_system_contract...
-    ```
-
----
-15. (CN?) SELFDESTRUCT via internal CALL/CALLCODE/DELEGATECALL does not apply on Hedera**
-    **Pattern:** `Account.CodeMismatchError: Code of 0x...: is 0x32ff (or 0x6000ff, or the caller's own CALLCODE/DELEGATECALL bytecode), expected 0x.` — or `Account.BalanceMismatchError: ... want 0x00, got 0x02540be400` (1 tinybar left over) when only the balance-drain half of SELFDESTRUCT is being checked.
-    
-    **Root cause:** Same underlying gap as [hedera_prague.md #18](hedera_prague.md#18-cn-selfdestruct-via-internal-call-does-not-delete-the-account-on-hedera). In each case the target's runtime code ends in `SELFDESTRUCT`, triggered via an internal `CALL` (e.g. `code += Op.CALL(address=target, gas=100_000)` / `trigger(address=target, gas=0x10000)`) rather than a direct top-level call — including when nested an extra frame deep (`test_extcodehash_created_and_deleted_recheck_outer`'s outer contract `CALL`s an inner contract that itself `CALL`s the self-destructing target), and when reached via `CALLCODE`/`DELEGATECALL` so SELFDESTRUCT executes in the *caller's* own context (`test_extcodehash_subcall_selfdestruct`). The tests expect the account to be deleted (or, post-EIP-6780 for a pre-existing account, at least have its balance drained to 0), but neither the code deletion nor the balance transfer happens — Hedera silently no-ops SELFDESTRUCT whenever it's reached via an internal call opcode, regardless of which one or how deep.
-    
-    **Total:** 8 (Hedera-only; not yet checked against Geth)
-    
-    **Hedera-only — 8 tests**
-    ```
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-create]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-create2]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted[fork_Prague-state_test-call]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted_recheck_outer[fork_Prague-state_test]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-pre_existing-callcode]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-pre_existing-delegatecall]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-dynamic-callcode]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-dynamic-delegatecall]
-    ```
-
----
-16. (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure
-    **Pattern:** `execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x...: want 0x1 (dec:1), got 0x0 (dec:0)` — the call's own success flag, stored via `Op.SSTORE(slot, call_opcode(address=target))`.
-    
-    **Root cause:** Related to [#1](#1-cn-selfdestruct-via-internal-callcallcodedelegatecall-does-not-apply-on-hedera) but a distinct symptom. `target`'s entire body is `Op.SELFDESTRUCT(beneficiary)`; calling into it with `CALL`, `CALLCODE`, or `DELEGATECALL` should trivially succeed per spec (`call_succeeds = call_opcode != Op.STATICCALL`). On Hedera the call itself reports failure (return value `0`) instead of succeeding — unlike #1's cases, where the call succeeds within the transaction and only the *end-of-transaction* account deletion/balance-drain is silently skipped. Here the failure is visible immediately via the call's own return value, for all three non-static call opcodes.
-    
-    **Total:** 3 (Hedera-only; not yet checked against Geth)
-    
-    **Hedera-only — 3 tests**
-    ```
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_CALL-state_test]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_CALLCODE-state_test]
-    tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_DELEGATECALL-state_test]
-    ```
-
----
-17. (CN?) Coinbase address is not pre-warmed (EIP-3651)
-    **Pattern:** `execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x...: want 0x64 (dec:100), got 0xa28 (dec:2600)` (gas-cost measurements), or `want 0x1 (dec:1), got 0x0 (dec:0)` (a call given just enough gas for a warm access runs out of gas and fails).
-    
-    **Root cause:** EIP-3651 (Warm Coinbase, active since Shanghai) requires the `COINBASE` address to be added to the access list at the start of transaction execution, so the first `EXTCODESIZE`/`EXTCODECOPY`/`EXTCODEHASH`/`BALANCE`/`CALL`-family access to it costs the warm price (100 gas) instead of the cold price (2600 gas, or ~2855 for the `CALL`-family opcodes once their own overhead is included). `test_warm_coinbase_gas_usage` measures this cost directly and expects the warm price on Prague (`fork >= Shanghai`), but measures the cold price instead — Hedera isn't pre-warming the coinbase address. `test_warm_coinbase_call_out_of_gas`'s `sufficient_gas` variants independently confirm this: they provide exactly enough gas for a warm-cost call to succeed, and the call fails (runs OOG) because Hedera charges the cold price instead.
-    
-    **Total:** 12 (Hedera-only; not yet checked against Geth) — all 8 `test_warm_coinbase_gas_usage` opcodes, plus the 4 `test_warm_coinbase_call_out_of_gas` `sufficient_gas` variants. The matching `insufficient_gas` variants pass (both warm and cold accounting equally run out of gas there, so the distinction doesn't surface).
-    
-    **Hedera-only — 12 tests**
-    ```
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODESIZE]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODECOPY]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODEHASH]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-BALANCE]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-CALL]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-CALLCODE]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-DELEGATECALL]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-STATICCALL]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-CALL-sufficient_gas]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-CALLCODE-sufficient_gas]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-DELEGATECALL-sufficient_gas]
-    tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-STATICCALL-sufficient_gas]
-    ```
-
----
-18. (CN?) Out-of-gas transaction does not consume the full declared gas_limit
+16. (CN?) Out-of-gas transaction does not consume the full declared gas_limit
     **Pattern:** `execution_testing.base_types.composite_types.Account.BalanceMismatchError: unexpected balance for account 0x...: want 0x00, got 0x01ff973cafa80000` — the sender's post-tx balance is expected to be fully drained (the EVM-spec penalty for running out of gas is to consume the entire `gas_limit`, with no refund), but a nonzero balance remains.
     
     **Root cause:** Per the EVM spec, when a transaction runs out of gas, the *entire* declared `gas_limit` is charged to the sender as a penalty — none of it is refunded, regardless of how much gas was actually consumed by opcodes before the OOG point. `test_create_oog_from_eoa_refunds` relies on exactly this to assert `sender` ends with `balance=0` after an OOG scenario (pre-EIP-8037). Tracing a failing case: the sender was funded with precisely `gas_limit(400_000) × gas_price(1070 Gwei) = 0.428 ETH` (confirmed via the harness's own deferred-funding calculation, which matches exactly), yet it ends with `0.144 ETH` left over — meaning only ~265,420 of the 400,000 declared gas units were actually charged. Hedera appears to charge only for gas consumed up to the point of failure (like a `REVERT`), not the full declared `gas_limit` as EVM-spec OOG semantics require. This is independent of transaction funding — any funding strategy (hardcoded amount or deferred) hits the same shortfall, since the gas simply isn't being charged in full.
@@ -371,7 +417,7 @@
     ```
 
 ---
-19. (Relay?) RPC rejects transaction — invalid yParity (-32000)
+17. (Relay?) RPC rejects transaction — invalid yParity (-32000)
     **Pattern:** `JSONRPCError(code=-32000, message=Invalid arguments: invalid yParity ...)`
     
     **Root cause:** `test_valid_tx_invalid_auth_signature` intentionally sets a garbage `v`/`r`/`s` (e.g. `v=2`, which isn't a valid yParity — must be 0 or 1) on the authorization tuple. Per the EIP-7702 spec, an authorization with an invalid/unrecoverable signature should simply be **skipped** (ignored) without affecting the rest of the transaction — the outer transaction should still execute normally, which is why the test expects `callee_address`'s storage to be set regardless. Hedera's JSON-RPC relay instead validates the authorization list's signature components upfront and rejects the **entire transaction** at submission (`Invalid arguments: invalid yParity (argument="signature", value={..., "yParity": 2}, code=INVALID_ARGUMENT)`), rather than silently discarding the bad authorization and proceeding — stricter validation than the spec requires, fully Hedera-only (8/8).
@@ -394,7 +440,7 @@
     ```
 
 ---
-20. (Relay?) Zero-value r/s in authorization tuple serialized as empty '0x'
+18. (Relay?) Zero-value r/s in authorization tuple serialized as empty '0x'
     **Pattern:** `pydantic_core._pydantic_core.ValidationError: N validation error(s) for TransactionByHashResponse` — `authorizationList.0.r` and/or `authorizationList.0.s`, `Value error, invalid literal for int() with base 0: '0x'`
     
     **Root cause:** `test_valid_tx_invalid_auth_signature` sets `r=0` and/or `s=0` on the authorization tuple. When Hedera's JSON-RPC relay serializes the authorization list in its `getTransactionByHash` response, a zero-valued `r`/`s` is encoded as the empty hex string `'0x'` instead of `'0x0'`. The test client's pydantic model calls `int(value, 0)` on that field, which raises on `'0x'`, so the response fails to parse before the test can assert on results. Narrower and more specific than the general schema-mismatch issue in [1](#1-pydantic-validation-error-on-json-rpc-transaction-response) — this is a single, precise zero-value hex-encoding bug.
@@ -412,7 +458,7 @@
     ```
 
 ---
-21. (CN?) Call to EIP-7702-delegated EOA rejected as INVALID_CONTRACT_ID
+19. (CN?) Call to EIP-7702-delegated EOA rejected as INVALID_CONTRACT_ID
     **Pattern:** Transaction included with `status: "0x0"` and `revertReason: 0x494e56414c49445f434f4e54524143545f4944` (`"INVALID_CONTRACT_ID"`), even though the target EOA's delegation was set correctly.
     
     **Root cause:** After an EOA is given EIP-7702 delegated code (`eth_getCode` correctly returns the `0xef0100...` designation pointing at the implementation contract), sending a plain transaction directly `to:` that EOA is rejected by Hedera's relay/consensus layer with `INVALID_CONTRACT_ID`. The delegated code never executes, so any storage writes it should perform never happen — e.g. in `test_pointer_measurements`, `pointer`'s storage slot 0 is expected to hold `ADDRESS()` (the pointer's own address) but reads back `0x0` because the call that should have triggered execution reverted before running. Hedera appears to not recognize a freshly-delegated EOA as a callable "contract" for this call path.
@@ -444,10 +490,10 @@
     ```
 
 ---
-22. (Relay caching?) EIP-7702 authorization tuple does not bump authority nonce
+20. (Relay caching?) EIP-7702 authorization tuple does not bump authority nonce
     **Pattern:** `execution_testing.base_types.composite_types.Account.NonceMismatchError: unexpected nonce for account 0x...: want 0x01, got 0x00` (higher expected nonces for tests that chain/re-authorize).
     
-    **Root cause:** Whenever a set-code (type 0x4) transaction's `authorization_list` is processed on Hedera — whether the authorization is sent as part of the pre-alloc setup (e.g. `pre.fund_eoa(0, delegation="Self")`) or as part of the test's own transaction — the outer transaction is accepted and mined, but the authority account's nonce is not incremented. This occurs for both self-delegation and delegation to a separately deployed contract, so it isn't limited to one authorization shape; it points to a broader gap in how Hedera applies EIP-7702 authorization tuples. See also [#16](#16-eip-7702-authorization-tuple-does-not-write-delegation-designation-code) — a related but distinct symptom (delegation code missing instead of nonce not bumped), likely the same underlying gap.
+    **Root cause:** Whenever a set-code (type 0x4) transaction's `authorization_list` is processed on Hedera — whether the authorization is sent as part of the pre-alloc setup (e.g. `pre.fund_eoa(0, delegation="Self")`) or as part of the test's own transaction — the outer transaction is accepted and mined, but the authority account's nonce is not incremented. This occurs for both self-delegation and delegation to a separately deployed contract, so it isn't limited to one authorization shape; it points to a broader gap in how Hedera applies EIP-7702 authorization tuples. See also [#21](#21-eip-7702-authorization-tuple-does-not-write-delegation-designation-code) — a related but distinct symptom (delegation code missing instead of nonce not bumped), likely the same underlying gap.
     
     **Total:** 196 (Hedera-only; not yet checked against Geth)
     
@@ -652,10 +698,10 @@
     ```
 
 ---
-23. (CN?) EIP-7702 authorization tuple does not write delegation designation code
+21. (CN?) EIP-7702 authorization tuple does not write delegation designation code
     **Pattern:** `execution_testing.base_types.composite_types.Account.CodeMismatchError: unexpected code for account 0x...: want 0xef0100..., got 0x` — the authority account's code is left empty instead of holding the expected delegation designation.
     
-    **Root cause:** Same underlying gap as [#15](#15-relay-caching-eip-7702-authorization-tuple-does-not-bump-authority-nonce): Hedera accepts and mines the outer set-code transaction but does not apply the authorization tuple. Here the test's `post` check happens to assert `code` (rather than `nonce`), surfacing as a `CodeMismatchError` instead — the authority's code stays empty (`0x`) rather than becoming the `0xef0100<address>` delegation designation.
+    **Root cause:** Same underlying gap as [#20](#20-relay-caching-eip-7702-authorization-tuple-does-not-bump-authority-nonce): Hedera accepts and mines the outer set-code transaction but does not apply the authorization tuple. Here the test's `post` check happens to assert `code` (rather than `nonce`), surfacing as a `CodeMismatchError` instead — the authority's code stays empty (`0x`) rather than becoming the `0xef0100<address>` delegation designation.
     
     **Total:** 19 (Hedera-only; not yet checked against Geth)
     
@@ -683,47 +729,10 @@
     ```
 
 ---
-24. (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera
-    **Pattern:** `execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32003, message=Transaction rejected: INVALID_SOLIDITY_ADDRESS - receipt for transaction ... contained error status INVALID_SOLIDITY_ADDRESS)`.
-    
-    **Root cause:** `test_set_code_to_self_destruct`'s `external_sendall_recipient_True` variants set `recipient = pre.fund_eoa(0)` (`test_set_code_txs.py:515`). Because the amount is `0`, `_fund_eoa` (`pre_alloc.py:710-718`) never sends a funding transaction for it, so `recipient` has no footprint on the Hedera ledger. When the delegated contract executes `SELFDESTRUCT(recipient)`, Hedera rejects the transaction outright with `INVALID_SOLIDITY_ADDRESS` instead of crediting the balance — the beneficiary of a `SELFDESTRUCT` must already exist as an account on Hedera. This reproduces identically regardless of `auth_signer`'s own balance (`balance_0` and `balance_10000000000` both fail the same way), confirming `recipient`'s non-existence — not `auth_signer`'s — is the trigger. This is a different mechanism from [#13](#13-call-to-eip-7702-delegated-eoa-rejected-as-invalid_contract_id) (which is about calling directly into an already-delegated EOA, not about a SELFDESTRUCT beneficiary).
-    
-    **Total:** 2 (Hedera-only; not yet checked against Geth)
-    
-    **Hedera-only — 2 tests**
-    ```
-    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destruct[fork_Prague-state_test-balance_0-external_sendall_recipient_True]
-    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destruct[fork_Prague-state_test-balance_10000000000-external_sendall_recipient_True]
-    ```
-
----
-25. (CN?) SELFDESTRUCT via internal CALL does not delete the account on Hedera
-    **Pattern:** `AssertionError: Code of 0x...: is 0x<deployed bytecode>, expected 0x.` — a contract that was both `CREATE`d and `SELFDESTRUCT`ed within the same transaction (which should be fully wiped per EIP-6780) still has its deployed code after the transaction is mined successfully.
-    
-    **Root cause:** In `test_set_code_to_self_destructing_account_deployed_in_same_tx`, the transaction's top-level target is `contract_creator_address`, which internally `CREATE`s a new contract and then issues a nested `CALL` into it, and that nested call is what runs the `SELFDESTRUCT`. The transaction is accepted and mined without error, but the deleted-account effect never applies. This was confirmed to be independent of two other candidate explanations by testing all four combinations of `balance` (`0` / `10_000_000_000`) × `external_sendall_recipient` (`False` / `True`):
-    
-    | `balance` | `external_sendall_recipient` | beneficiary funded on-chain? | result |
-    |---|---|---|---|
-    | `0` | `False` (recipient = `auth_signer`) | no | code not wiped |
-    | `0` | `True` (recipient = separate EOA) | no | code not wiped |
-    | `10000000000` | `True` (recipient = separate EOA) | no | code not wiped |
-    | `10000000000` | `False` (recipient = `auth_signer`) | **yes** | code not wiped |
-     
-    **Total:** 4 confirmed (all combinations of `balance` × `external_sendall_recipient` for `create_opcode_CREATE-call_set_code_first_False`); full-suite count not yet determined.
-    
-    **Hedera-only — 4 tests confirmed**
-    ```
-    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destructing_account_deployed_in_same_tx[fork_Prague-state_test-create_opcode_CREATE-call_set_code_first_False-balance_0-external_sendall_recipient_False]
-    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destructing_account_deployed_in_same_tx[fork_Prague-state_test-create_opcode_CREATE-call_set_code_first_False-balance_0-external_sendall_recipient_True]
-    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destructing_account_deployed_in_same_tx[fork_Prague-state_test-create_opcode_CREATE-call_set_code_first_False-balance_10000000000-external_sendall_recipient_True]
-    tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destructing_account_deployed_in_same_tx[fork_Prague-state_test-create_opcode_CREATE-call_set_code_first_False-balance_10000000000-external_sendall_recipient_False]
-    ```
-
----
-26. (CN?) Delegated EOA used as transaction sender is not found as an existing account
+22. (CN?) Delegated EOA used as transaction sender is not found as an existing account
     **Pattern:** `execution_testing.rpc.rpc.SendTransactionExceptionError: JSONRPCError(code=-32001, message=Requested resource not found. address '0x...'.)` — the address reported missing is the transaction's own `sender`.
     
-    **Root cause:** `test_creating_tx_to_contract_creator` sets up `auth_signer = pre.fund_eoa(delegation=creator_code_address)` — the same pre-alloc mechanism from [#15](#15-relay-caching-eip-7702-authorization-tuple-does-not-bump-authority-nonce)/[#16](#16-eip-7702-authorization-tuple-does-not-write-delegation-designation-code) that sends a real on-chain "fund_eoa" transaction carrying an `authorization_list` entry before the actual test runs. The test's own transaction is then sent **from** `auth_signer` (`sender=auth_signer`). Submission fails outright because Hedera doesn't recognize `auth_signer` as an existing account at all. This looks like a downstream consequence of the same gap documented in #15/#16: if the pre-alloc delegation-setup transaction doesn't properly register the account on Hedera's ledger (beyond just failing to bump its nonce or write its code), then using that address as a transaction `sender` later fails with "resource not found" instead of just silently missing the delegation.
+    **Root cause:** `test_creating_tx_to_contract_creator` sets up `auth_signer = pre.fund_eoa(delegation=creator_code_address)` — the same pre-alloc mechanism from [#20](#20-relay-caching-eip-7702-authorization-tuple-does-not-bump-authority-nonce)/[#21](#21-eip-7702-authorization-tuple-does-not-write-delegation-designation-code) that sends a real on-chain "fund_eoa" transaction carrying an `authorization_list` entry before the actual test runs. The test's own transaction is then sent **from** `auth_signer` (`sender=auth_signer`). Submission fails outright because Hedera doesn't recognize `auth_signer` as an existing account at all. This looks like a downstream consequence of the same gap documented in #20/#21: if the pre-alloc delegation-setup transaction doesn't properly register the account on Hedera's ledger (beyond just failing to bump its nonce or write its code), then using that address as a transaction `sender` later fails with "resource not found" instead of just silently missing the delegation.
     
     **Total:** 5 (Hedera-only; not yet checked against Geth)
     
