@@ -4,9 +4,6 @@
 
 | # | Title | Status | Issue |
 |---|---|---|---|
-
-
-## Details
 | 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Awaiting Validation | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) |
 | 2 | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data | Issue | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580) |
 | 3 | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing | Awaiting Validation | — |
@@ -29,6 +26,9 @@
 | 20 | (Relay caching?) EIP-7702 authorization tuple does not bump authority nonce | Triage | — |
 | 21 | (CN?) EIP-7702 authorization tuple does not write delegation designation code | Triage | — |
 | 22 | (CN?) Delegated EOA used as transaction sender is not found as an existing account | Triage | — |
+
+
+## Details
 
 ---
 1. ▶️ ️(Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field
