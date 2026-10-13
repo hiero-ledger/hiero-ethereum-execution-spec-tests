@@ -13,36 +13,6 @@ uv run execute remote -rA -vv --fork=Prague \
     "tests/cancun/"
 ```
 
-### Run Failures
-
----
-##### 1. (CN?) Out-of-gas transaction does not consume the full declared gas_limit
-**Pattern:** `execution_testing.base_types.composite_types.Account.BalanceMismatchError: unexpected balance for account 0x...: want 0x00, got 0x01ff973cafa80000` — the sender's post-tx balance is expected to be fully drained (the EVM-spec penalty for running out of gas is to consume the entire `gas_limit`, with no refund), but a nonzero balance remains.
-
-**Root cause:** Per the EVM spec, when a transaction runs out of gas, the *entire* declared `gas_limit` is charged to the sender as a penalty — none of it is refunded, regardless of how much gas was actually consumed by opcodes before the OOG point. `test_create_oog_from_eoa_refunds` relies on exactly this to assert `sender` ends with `balance=0` after an OOG scenario (pre-EIP-8037). Tracing a failing case: the sender was funded with precisely `gas_limit(400_000) × gas_price(1070 Gwei) = 0.428 ETH` (confirmed via the harness's own deferred-funding calculation, which matches exactly), yet it ends with `0.144 ETH` left over — meaning only ~265,420 of the 400,000 declared gas units were actually charged. Hedera appears to charge only for gas consumed up to the point of failure (like a `REVERT`), not the full declared `gas_limit` as EVM-spec OOG semantics require. This is independent of transaction funding — any funding strategy (hardcoded amount or deferred) hits the same shortfall, since the gas simply isn't being charged in full.
-
-**Total:** 16 confirmed — every `refund_type` × `oog_scenario in {oog_code_deposit, oog_invalid_opcode}` combination fails identically (same leftover `0x01ff973cafa80000`). All 8 `no_oog` variants pass, since that scenario doesn't assert sender balance.
-
-**Hedera-only — 16 tests**
-```
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-sstore_direct-oog_code_deposit]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-sstore_direct-oog_invalid_opcode]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-sstore_call-oog_code_deposit]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-sstore_call-oog_invalid_opcode]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-sstore_delegatecall-oog_code_deposit]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-sstore_delegatecall-oog_invalid_opcode]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-sstore_callcode-oog_code_deposit]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-sstore_callcode-oog_invalid_opcode]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-selfdestruct-oog_code_deposit]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-selfdestruct-oog_invalid_opcode]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-log_op-oog_code_deposit]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-log_op-oog_invalid_opcode]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-nested_create-oog_code_deposit]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-nested_create-oog_invalid_opcode]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-nested_create2-oog_code_deposit]
-tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds[fork_Prague-blockchain_test-nested_create2-oog_invalid_opcode]
-```
-
 ### Run Results
 ```
 =========================================================================================== short test summary info ===========================================================================================

@@ -29,29 +29,6 @@ uv run execute remote -rA -vv --fork=Prague \
     "tests/tangerine_whistle/"
 ```
 
-### Run Failures
-
----
-##### 1. (CN?) SELFDESTRUCT via internal CALL/CREATE does not apply on Hedera
-**Note:** A lot of similar failures on Hedera and GETH
-
-**Pattern:** `Account.NonceMismatchError: unexpected nonce ...` / `Account.BalanceMismatchError: unexpected balance ...` (including beneficiary addresses labeled by precompile/system-contract name, e.g. `(RIPEMD160)`, `(BLS12_G1ADD)`, `(BEACON_ROOTS_ADDRESS)`) / `AssertionError: Code of 0x...: is 0x<code>, expected 0x.` / `AssertionError: Balance of 0x...: is 0x<n>, expected 0.`
-
-**Root cause:** Same family as [hedera_constantinople.md #1](hedera_constantinople.md#1-cn-selfdestruct-via-internal-callcallcodedelegatecall-does-not-apply-on-hedera) and [hedera_frontier.md #1](hedera_frontier.md#1-cn-selfdestruct-does-not-apply-when-triggered-via-internal-call-or-during-init-code), now covering this file's entire SELFDESTRUCT combinatorial matrix. Every failing test deploys a `victim` contract whose code is `Op.SELFDESTRUCT(beneficiary)` and triggers it via an internal `Op.CALL(gas=inner_call_gas, address=victim)` from a separate `caller` contract (`test_selfdestruct_to_account`, `test_selfdestruct_to_precompile`, `test_selfdestruct_to_system_contract`, `test_selfdestruct_to_self`, and their `_state_access_boundary` variants), or — for `test_initcode_selfdestruct_to_self` — triggers `SELFDESTRUCT(ADDRESS)` directly inside `CREATE`'s init code. In every case Hedera leaves the victim's nonce/code/balance untouched and the beneficiary never receives the transferred balance, instead of applying the deletion/transfer the tests expect for the "exact_gas" (success) parametrizations across every beneficiary type (EOA, contract, each precompile, each system contract, self).
-
-**Total:** 437 unique test IDs (Hedera-only; not yet checked against Geth) across 7 test functions: `test_selfdestruct_to_precompile` (187), `test_selfdestruct_to_precompile_state_access_boundary` (170), `test_selfdestruct_to_account` (29), `test_selfdestruct_state_access_boundary` (27), `test_selfdestruct_to_system_contract` (20), `test_selfdestruct_to_self` (3), `test_initcode_selfdestruct_to_self` (1).
-
-**Hedera-only — 7 test functions (437 parametrized tests total)**
-```
-tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_initcode_selfdestruct_to_self...
-tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_state_access_boundary...
-tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_account...
-tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_precompile...
-tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_precompile_state_access_boundary...
-tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_self...
-tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py::test_selfdestruct_to_system_contract...
-```
-
 ### Run Results
 ```
 =========================================================================================== short test summary info ===========================================================================================

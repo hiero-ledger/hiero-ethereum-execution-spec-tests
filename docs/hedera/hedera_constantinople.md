@@ -1,4 +1,4 @@
-## ⚠️Constantinople
+**## ⚠️Constantinople
 
 ### Run
 ```bash
@@ -11,43 +11,6 @@ uv run execute remote -rA -vv --fork=Prague \
     --tx-wait-timeout=15 \
     --max-tx-per-batch=1 \
     "tests/constantinople/"
-```
-
-### Run Failures
-
----
-##### 1. (CN?) SELFDESTRUCT via internal CALL/CALLCODE/DELEGATECALL does not apply on Hedera
-**Pattern:** `Account.CodeMismatchError: Code of 0x...: is 0x32ff (or 0x6000ff, or the caller's own CALLCODE/DELEGATECALL bytecode), expected 0x.` — or `Account.BalanceMismatchError: ... want 0x00, got 0x02540be400` (1 tinybar left over) when only the balance-drain half of SELFDESTRUCT is being checked.
-
-**Root cause:** Same underlying gap as [hedera_prague.md #18](hedera_prague.md#18-cn-selfdestruct-via-internal-call-does-not-delete-the-account-on-hedera). In each case the target's runtime code ends in `SELFDESTRUCT`, triggered via an internal `CALL` (e.g. `code += Op.CALL(address=target, gas=100_000)` / `trigger(address=target, gas=0x10000)`) rather than a direct top-level call — including when nested an extra frame deep (`test_extcodehash_created_and_deleted_recheck_outer`'s outer contract `CALL`s an inner contract that itself `CALL`s the self-destructing target), and when reached via `CALLCODE`/`DELEGATECALL` so SELFDESTRUCT executes in the *caller's* own context (`test_extcodehash_subcall_selfdestruct`). The tests expect the account to be deleted (or, post-EIP-6780 for a pre-existing account, at least have its balance drained to 0), but neither the code deletion nor the balance transfer happens — Hedera silently no-ops SELFDESTRUCT whenever it's reached via an internal call opcode, regardless of which one or how deep.
-
-**Total:** 8 (Hedera-only; not yet checked against Geth)
-
-**Hedera-only — 8 tests**
-```
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-create]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-create2]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted[fork_Prague-state_test-call]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted_recheck_outer[fork_Prague-state_test]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-pre_existing-callcode]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-pre_existing-delegatecall]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-dynamic-callcode]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-dynamic-delegatecall]
-```
-
----
-##### 2. (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure
-**Pattern:** `execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x...: want 0x1 (dec:1), got 0x0 (dec:0)` — the call's own success flag, stored via `Op.SSTORE(slot, call_opcode(address=target))`.
-
-**Root cause:** Related to [#1](#1-cn-selfdestruct-via-internal-callcallcodedelegatecall-does-not-apply-on-hedera) but a distinct symptom. `target`'s entire body is `Op.SELFDESTRUCT(beneficiary)`; calling into it with `CALL`, `CALLCODE`, or `DELEGATECALL` should trivially succeed per spec (`call_succeeds = call_opcode != Op.STATICCALL`). On Hedera the call itself reports failure (return value `0`) instead of succeeding — unlike #1's cases, where the call succeeds within the transaction and only the *end-of-transaction* account deletion/balance-drain is silently skipped. Here the failure is visible immediately via the call's own return value, for all three non-static call opcodes.
-
-**Total:** 3 (Hedera-only; not yet checked against Geth)
-
-**Hedera-only — 3 tests**
-```
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_CALL-state_test]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_CALLCODE-state_test]
-tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_DELEGATECALL-state_test]
 ```
 
 ### Run Results

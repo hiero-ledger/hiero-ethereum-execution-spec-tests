@@ -13,32 +13,6 @@ uv run execute remote -rA -vv --fork=Prague \
     "tests/shanghai/"
 ```
 
-### Run Failures
-
----
-##### 1. (CN?) Coinbase address is not pre-warmed (EIP-3651)
-**Pattern:** `execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x...: want 0x64 (dec:100), got 0xa28 (dec:2600)` (gas-cost measurements), or `want 0x1 (dec:1), got 0x0 (dec:0)` (a call given just enough gas for a warm access runs out of gas and fails).
-
-**Root cause:** EIP-3651 (Warm Coinbase, active since Shanghai) requires the `COINBASE` address to be added to the access list at the start of transaction execution, so the first `EXTCODESIZE`/`EXTCODECOPY`/`EXTCODEHASH`/`BALANCE`/`CALL`-family access to it costs the warm price (100 gas) instead of the cold price (2600 gas, or ~2855 for the `CALL`-family opcodes once their own overhead is included). `test_warm_coinbase_gas_usage` measures this cost directly and expects the warm price on Prague (`fork >= Shanghai`), but measures the cold price instead — Hedera isn't pre-warming the coinbase address. `test_warm_coinbase_call_out_of_gas`'s `sufficient_gas` variants independently confirm this: they provide exactly enough gas for a warm-cost call to succeed, and the call fails (runs OOG) because Hedera charges the cold price instead.
-
-**Total:** 12 (Hedera-only; not yet checked against Geth) — all 8 `test_warm_coinbase_gas_usage` opcodes, plus the 4 `test_warm_coinbase_call_out_of_gas` `sufficient_gas` variants. The matching `insufficient_gas` variants pass (both warm and cold accounting equally run out of gas there, so the distinction doesn't surface).
-
-**Hedera-only — 12 tests**
-```
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODESIZE]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODECOPY]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-EXTCODEHASH]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-BALANCE]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-CALL]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-CALLCODE]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-DELEGATECALL]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_gas_usage[fork_Prague-state_test-STATICCALL]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-CALL-sufficient_gas]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-CALLCODE-sufficient_gas]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-DELEGATECALL-sufficient_gas]
-tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_call_out_of_gas[fork_Prague-state_test-STATICCALL-sufficient_gas]
-```
-
 ### Run Results
 ```
 =========================================================================================== short test summary info ===========================================================================================
