@@ -4,7 +4,7 @@
 
 | # | Title | Status | Issue | Comment |
 |---|---|---|---|---|
-| 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Awaiting Validation | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) |
+| 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Fixed | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) |
 | 2 | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data | Issue | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580) |
 | 3 | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing | Awaiting Validation | — |
 | 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Expected Behaviour | [hiero-ledger/hiero-consensus-node#21633](https://github.com/hiero-ledger/hiero-consensus-node/issues/21633) (related) | Confuguring local Hedera MAX_TRANSACTION_GAS_LIMIT=15M |
@@ -15,7 +15,7 @@
 | 9 | (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera | Triage | — |
 | 10 | (CN?) Warm-access gas cost not honored — repeat accesses (EIP-2929) and coinbase pre-warming (EIP-3651) | Issue | [hiero-ledger/hiero-consensus-node#21335](https://github.com/hiero-ledger/hiero-consensus-node/issues/21335) (COINBASE part only) |
 | 11 | (CN?) BLOCKHASH returns 0 for genesis/recent blocks | Triage | — |
-| 12 | (CN?) CALL with a nonzero value to a precompile address fails | Triage | — |
+| 12 | (CN?) CALL with a nonzero value to a precompile address fails | Issue | https://github.com/hiero-ledger/hiero-consensus-node/issues/21332 | Seems like 'Expected Behaviour' but Hedera docs should be updated |
 | 13 | (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement | Triage | — |
 | 14 | Miscellaneous singleton failures — not yet root-caused | Triage | — |
 | 15 | (Possible test-infra flake, not a confirmed Hedera bug) `test_tx_gas_limit` ERROR | Triage | — |
@@ -33,8 +33,6 @@
 
 ---
 1. ▶️ ️(Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field
-
-   **Status:** Awaiting Validation: https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858
 
    **Root cause:** The relay duplicates `yParity` as an extra snake_case `y_parity` field in `authorizationList` entries, which is otherwise rejected as an unexpected field. Likely because the mirror node returns `y_parity` and the relay doesn't drop it after formatting. Currently worked around client-side by dropping `y_parity` before validation (`packages/testing/src/execution_testing/test_types/transaction_types.py:90`).
 
@@ -55,8 +53,6 @@
 ---
 2. ⚠️(CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data
 
-   **Status:** Issue: https://github.com/hiero-ledger/hiero-consensus-node/issues/27580
-
    **Root cause:** Hedera has a bug that prevents the transaction hash it returns for a submitted transaction from matching the hash calculated from that transaction's own RLP encoding. The `assert self.transaction_hash == self.hash` check is disabled (replaced with a `print` warning) to work around this (`packages/testing/src/execution_testing/rpc/rpc_types.py:156`).
 
    **Reproducer:** Uncomment the `assert self.transaction_hash == self.hash` under "# TODO Fix On Hedera: the hash calculated by the test client from the" comment at `packages/testing/src/execution_testing/rpc/rpc_types.py`
@@ -74,13 +70,11 @@
    ```
 
 ---
-3. ▶️ (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing
-
-   **Status:** Fix Validation
+3. ✅(Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing
 
    **Root cause:** The local Hedera node's JSON-RPC relay doesn't handle multiple same-sender transactions submitted in one JSON-RPC batch call reliably — it races on nonce sequencing when 2+ transactions from the same account arrive together, causing "nonce too low"/"nonce too high" depending on timing. Sending them one at a time (waiting for each to land in a block before sending the next) sidesteps the race entirely.
 
-   Example:
+   (Fixed) Example:
     1. frontier
    ```bash
    uv run execute remote -rA -vv --fork=Prague \
@@ -104,12 +98,36 @@
         "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption"
     ```
 
+   With ENABLE_TX_POOL, ENABLE_NONCE_ORDERING enabled it ia failing with 'unexpected nonce for account + Transaction rejected: WRONG_NONCE' or 'Nonce too low' 
+
+   Example:
+   1. 'unexpected nonce for account + Transaction rejected: WRONG_NONCE'
+   ```
+   uv run execute remote -rA -vv --fork=Prague \
+        --rpc-endpoint=http://localhost:37546/ \
+        --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
+        --rpc-chain-id=298 \
+        --seed-account-sweep-amount='1_000_000 ether' \
+        --default-max-fee-per-blob-gas=710_000_000_000 \
+        --tx-wait-timeout=15 \
+        "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-stop-tx_value_0]"
+   ```
+   2. Nonce too low
+   ```
+   uv run execute remote -rA -vv --fork=Prague \
+        --rpc-endpoint=http://localhost:37546/ \
+        --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
+        --rpc-chain-id=298 \
+        --seed-account-sweep-amount='1_000_000 ether' \
+        --default-max-fee-per-blob-gas=710_000_000_000 \
+        --tx-wait-timeout=15 \
+        "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption"
+   ```
+
    Workaround: add `--max-tx-per-batch=1`.
 
 ---
 4. ✅(Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit
-
-   **Status:** Expected Behaviour
 
    **Root cause:** The local Hedera node's head block reports a fixed `gasLimit` of `0x8f0d180` (150,000,000), regardless of the `--env-gas-limit` value passed to `execute remote` (e.g. `15000000`). The chain's actual block gas limit isn't adjustable via that flag, so tests relying on the environment gas limit matching the real network's block gas limit see a mismatch.
 
@@ -123,8 +141,6 @@
 
 ---
 5. ⚠️(CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
-
-   **Status:** Issue: https://github.com/hiero-ledger/hiero-consensus-node/issues/27581
 
    **Root cause:** `DataBufferMarshaller` (`hedera-node/hedera-app/.../grpc/impl/netty/DataBufferMarshaller.java`) caches its read buffer in a **`static`** `ThreadLocal<BufferedData>`. The consensus node constructs two separate `DataBufferMarshaller` instances with different capacities — a small one for regular transactions (`MAX_TRANSACTION_SIZE + 1` = 133,121 bytes) and a large one for jumbo transactions (`jumboMaxTxnSize + 1`, e.g. 9,000,002 bytes) — but because the `ThreadLocal` field is `static`, both instances share the same per-thread cached buffer. gRPC dispatches calls across a shared Netty worker-thread pool, not partitioned by method, so on most worker threads a small/regular call (queries, node signature transactions, small `EthereumTransaction`s) runs first and permanently caches a 133,121-byte `ByteBuffer` for that thread — `ByteBuffer` capacity is fixed at allocation and `reset()` only rewinds position, it can't grow it.
 
@@ -148,8 +164,6 @@
 
 ---
 6. ⚠️(CN) `BALANCE`, `SELFBALANCE` and `CALLVALUE` opcodes return values in tinybar instead of wei
-
-   **Status:** Issue: https://github.com/hiero-ledger/hiero-consensus-node/issues/27582
 
    **Root cause:** Hedera's EVM returns account balances and call values in tinybar (1 tinybar = 10_000_000_000 wei, i.e. 10^10 wei) rather than in wei, so the values seen by contract code are 10^10 times smaller than the Ethereum-spec values the tests expect. For example, an account funded with 0.29 ETH (`290_000_000_000_000_000` wei) reports `29_000_000` from `BALANCE`. The same conversion difference affects `SELFBALANCE` and `CALLVALUE`.
 
@@ -527,7 +541,7 @@
     ```
 
 ---
-12. (CN?) CALL with a nonzero value to a precompile address fails
+12. ⚠️(CN?) CALL with a nonzero value to a precompile address fails
     **Pattern:** `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` — a `CALL`/`CALLCODE` sending value to the identity precompile (`0x04`), expected to succeed, but the call fails.
     
     **Root cause:** Not the sub-tinybar floor — already ruled out. The test's `value` is already exactly 1 tinybar (`0x2540BE400`), and the caller contract's balance is scaled to match exactly (confirmed via the deploy log: `balance=0.000000010000000000 ETH`). Bumping the caller's balance to 2 tinybar (so balance > value with margin) still fails identically; bumping the call's `gas` from `0x30D40` to `1_000_000` also still fails identically. Both "insufficient balance" and "insufficient gas" are ruled out. The only thing distinguishing this from the passing `identity_1`/`identity_2`/etc. variants in the same file is that it sends a *nonzero value* to a *precompile address* — pointing to Hedera not supporting value transfers to precompile addresses via `CALL`/`CALLCODE` at all, independent of amount, balance, or gas. No test-side parameter fix found.

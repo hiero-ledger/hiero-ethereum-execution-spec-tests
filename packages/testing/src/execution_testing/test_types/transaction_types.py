@@ -74,13 +74,6 @@ class AuthorizationTupleGeneric(
 ):
     """Authorization tuple for transactions."""
 
-    # TODO Fix On Hedera: the relay duplicates `yParity` as `y_parity` or
-    # `yparity` in authorizationList entries, which would otherwise be
-    # rejected as an unexpected extra field. Most likely duplication
-    # happening because of MirrorNode returning the snake_case/lowercase
-    # variant and Relay is not dropping it after formatting.
-    model_config = CamelModel.model_config | {"extra": "ignore"}
-
     chain_id: NumberBoundTypeVar = Field(0)  # type: ignore
     address: Address
     nonce: NumberBoundTypeVar = Field(0)  # type: ignore
