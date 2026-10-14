@@ -26,6 +26,7 @@
 | 20 | (Relay caching?) EIP-7702 authorization tuple does not bump authority nonce | Triage | — |
 | 21 | (CN?) EIP-7702 authorization tuple does not write delegation designation code | Triage | — |
 | 22 | (CN?) Delegated EOA used as transaction sender is not found as an existing account | Triage | — |
+| 23 | (Relay/Mirror node) Account-state queries for a deleted (self-destructed) contract fail with `-32020` mirror node 500 | Triage | — |
 
 
 ## Details
@@ -194,6 +195,7 @@
 
     - **E. Cancun EIP-6780 (`tests/cancun/eip6780_selfdestruct/`).** Same symptoms in the Cancun run: account `Code`/`Balance`/`Nonce` left behind (`AssertionError: Code of 0x...: is 0x<code>, expected 0x.`, `Balance ... expected 0.`, `Nonce ... is 0x01, expected 0.`) and CREATE2 re-creation after SELFDESTRUCT failing because the old contract is still there (`Storage.KeyValueMismatchError: ... want 0x<address>, got 0x0`).
     - **F. Cancun `test_dynamic_create2_selfdestruct_collision*`.** These first failed with `Insufficient funds for transfer` (sender hard-coded to 7 ETH vs. a 150M gas limit × 1070 Gwei = 160.5 ETH). That was a test-funding problem, fixed in the test (`# Run On Hedera: increase funding because of "Insufficient funds for transfer"`, `pre.fund_eoa()`). After the fix the same tests fail with the SELFDESTRUCT symptoms above (`Balance of 0x...: is 0x174876e800, expected 0.`, `NonceMismatchError ... want 0x00, got 0x01`, `want 0x1, got 0x0`).
+      Evidence from `test_dynamic_create2_selfdestruct_collision_two_different_transactions[...call_create2_contract_at_the_end_False-create2_dest_already_in_state_False]` (not a scaling/conversion problem): the post-check fails with `BalanceMismatchError ... want 10000000000000, got 0x174876e800`. The expected `1000` wei is scaled by the harness to `10000000000000`; the actual `0x174876e800` is exactly 10 tinybar, i.e. `first_create2_value = 10` from the *first* transaction, not 1000 from the second. On the node the CREATE2 contract still has its code (`0x73<beneficiary>ff`), nonce `1` and balance 10 tinybar, and the beneficiary has balance `0` / nonce `0`. So in transaction 1 the call with value `100` into the freshly created `SELFDESTRUCT` contract did not deliver the value or delete the contract (the #8 symptom, causing the #7 one), and in transaction 2 the CREATE2 to the same address collides, leaving the balance at 10.
 
     **Total:** 565 (Hedera-only; not yet checked against Geth): A = 9, B = 437 unique test IDs across 7 test functions (`test_selfdestruct_to_precompile` (187), `test_selfdestruct_to_precompile_state_access_boundary` (170), `test_selfdestruct_to_account` (29), `test_selfdestruct_state_access_boundary` (27), `test_selfdestruct_to_system_contract` (20), `test_selfdestruct_to_self` (3), `test_initcode_selfdestruct_to_self` (1)), C = 8, D = 4 confirmed (all combinations of `balance` × `external_sendall_recipient` for `create_opcode_CREATE-call_set_code_first_False`; full-suite count not yet determined). E = 99, F = 8 (Cancun run).
 
@@ -943,4 +945,38 @@
     tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_delegation_clearing[fork_Prague-state_test-delegated_account-self_sponsored]
     tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_delegation_clearing_tx_to[fork_Prague-state_test-delegated_account-self_sponsored]
     tests/prague/eip7702_set_code_tx/test_set_code_txs_2.py::test_eoa_init_as_pointer[fork_Prague-state_test]
+    ```
+
+---
+23. (Relay/Mirror Node) Account-state queries for a deleted (self-destructed) contract fail with `-32020` mirror node 500
+    **Pattern:** `pydantic_core._pydantic_core.ValidationError: 2 validation errors for JSONRPCResponse` — `error.data.str: Input should be a valid string [input_value=500, input_type=int]` / `error.data.dict[any,any]: Input should be a valid dictionary`. The raised error is a client-side parsing failure; the real response is `{"error": {"code": -32020, "message": "[Request ID: ...] Mirror node upstream failure: statusCode=500, message=Internal error", "data": 500}}`.
+
+    **Root cause:** `get_alloc` (`rpc.py`, post-state check) queries every address in `post`. For a contract that the test created and then `SELFDESTRUCT`ed, the relay answers `eth_getBalance`, `eth_getTransactionCount` and `eth_getStorageAt` with `-32020 Mirror node upstream failure: statusCode=500` (reproducible from the relay directly, see below). `eth_getCode` for the same address correctly returns `0x`, and neighboring never-used addresses return `0x0`. A deleted contract should look like an unused address (`0x0` balance/nonce); instead the mirror node errors out. The client then fails to parse the response, because the relay sends `error.data` as the integer `500` while `JSONRPCErrorObject.data` is typed `str | dict | None` (`rpc_types.py:83`), so the actual relay error is hidden behind a `ValidationError`.
+
+    Widening the client type to also accept `int` would surface the real error, but would not make the test pass: the underlying query still fails. Skipping the `Account.NONEXISTENT` post-check for the deleted contract would hide the problem and drop the test's main assertion.
+
+    **Reproducer:** run the test, then query the deleted contract directly (the address varies per run; take it from the failing request):
+    ```bash
+    uv run execute remote -rA -vv --fork=Prague \
+        --rpc-endpoint=http://localhost:37546/ \
+        --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
+        --rpc-chain-id=298 \
+        --seed-account-sweep-amount='1_000_000 ether' \
+        --default-max-fee-per-blob-gas=710_000_000_000 \
+        --tx-wait-timeout=15 \
+        --max-tx-per-batch=1 \
+        "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_recreate_self_destructed_contract_different_txs[fork_Prague-blockchain_test-call_times_1-recreate_times_1-selfdestruct_contract_initial_balance_0-selfdestruct_other_address-create_opcode_CREATE2]"
+    ```
+    ```bash
+    curl -s -X POST http://localhost:37546/ -H 'content-type: application/json' \
+      -d '{"jsonrpc":"2.0","id":1,"method":"eth_getBalance","params":["<deleted contract address>","latest"]}'
+    # {"error":{"code":-32020,"message":"... Mirror node upstream failure: statusCode=500, message=Internal error","data":500}}
+    ```
+
+    **Total:** 2 confirmed (Hedera-only; not yet checked against Geth). Other tests whose post-state includes a deleted contract may hit the same failure behind a different message.
+
+    **Hedera-only — 2 tests**
+    ```
+    tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_recreate_self_destructed_contract_different_txs[fork_Prague-blockchain_test-call_times_1-recreate_times_1-selfdestruct_contract_initial_balance_0-selfdestruct_other_address-create_opcode_CREATE2]
+    tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_recreate_self_destructed_contract_different_txs[fork_Prague-blockchain_test-call_times_1-recreate_times_1-selfdestruct_contract_initial_balance_100000-selfdestruct_other_address-create_opcode_CREATE2]
     ```
