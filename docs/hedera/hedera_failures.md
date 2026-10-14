@@ -2,18 +2,18 @@
 
 ## Summary 
 
-| # | Title | Status | Issue |
-|---|---|---|---|
+| # | Title | Status | Issue | Comment |
+|---|---|---|---|---|
 | 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Awaiting Validation | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) |
 | 2 | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data | Issue | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580) |
 | 3 | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing | Awaiting Validation | — |
-| 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Triage | — |
+| 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Expected Behaviour | [hiero-ledger/hiero-consensus-node#21633](https://github.com/hiero-ledger/hiero-consensus-node/issues/21633) (related) | Confuguring local Hedera MAX_TRANSACTION_GAS_LIMIT=15M |
 | 5 | (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException` | Issue | [hiero-ledger/hiero-consensus-node#27581](https://github.com/hiero-ledger/hiero-consensus-node/issues/27581) |
 | 6 | (CN) `BALANCE`, `SELFBALANCE` and `CALLVALUE` opcodes return values in tinybar instead of wei | Issue | [hiero-ledger/hiero-consensus-node#27582](https://github.com/hiero-ledger/hiero-consensus-node/issues/27582) |
 | 7 | (CN?) SELFDESTRUCT does not apply when triggered via internal CALL/CALLCODE/DELEGATECALL or during init code | Triage | — |
 | 8 | (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure | Triage | — |
 | 9 | (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera | Triage | — |
-| 10 | (CN?) Warm-access gas cost not honored — repeat accesses (EIP-2929) and coinbase pre-warming (EIP-3651) | Triage | — |
+| 10 | (CN?) Warm-access gas cost not honored — repeat accesses (EIP-2929) and coinbase pre-warming (EIP-3651) | Issue | [hiero-ledger/hiero-consensus-node#21335](https://github.com/hiero-ledger/hiero-consensus-node/issues/21335) (COINBASE part only) |
 | 11 | (CN?) BLOCKHASH returns 0 for genesis/recent blocks | Triage | — |
 | 12 | (CN?) CALL with a nonzero value to a precompile address fails | Triage | — |
 | 13 | (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement | Triage | — |
@@ -107,7 +107,9 @@
    Workaround: add `--max-tx-per-batch=1`.
 
 ---
-4. (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit
+4. ✅(Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit
+
+   **Status:** Expected Behaviour
 
    **Root cause:** The local Hedera node's head block reports a fixed `gasLimit` of `0x8f0d180` (150,000,000), regardless of the `--env-gas-limit` value passed to `execute remote` (e.g. `15000000`). The chain's actual block gas limit isn't adjustable via that flag, so tests relying on the environment gas limit matching the real network's block gas limit see a mismatch.
 
