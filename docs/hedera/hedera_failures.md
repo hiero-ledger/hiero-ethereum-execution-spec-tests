@@ -32,7 +32,7 @@
 ## Details
 
 ---
-1. ▶️ ️(Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field
+1. ✅️(Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field
 
    **Root cause:** The relay duplicates `yParity` as an extra snake_case `y_parity` field in `authorizationList` entries, which is otherwise rejected as an unexpected field. Likely because the mirror node returns `y_parity` and the relay doesn't drop it after formatting. Currently worked around client-side by dropping `y_parity` before validation (`packages/testing/src/execution_testing/test_types/transaction_types.py:90`).
 
@@ -70,7 +70,7 @@
    ```
 
 ---
-3. ✅(Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing
+3. (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing
 
    **Root cause:** The local Hedera node's JSON-RPC relay doesn't handle multiple same-sender transactions submitted in one JSON-RPC batch call reliably — it races on nonce sequencing when 2+ transactions from the same account arrive together, causing "nonce too low"/"nonce too high" depending on timing. Sending them one at a time (waiting for each to land in a block before sending the next) sidesteps the race entirely.
 
