@@ -1687,7 +1687,7 @@ def test_ext_code_on_self_delegating_set_code(
         sender = auth_signer
         expected_ext_balance = auth_balance - gas_limit * max_fee_per_gas
         # TODO Fix On Hedera: BALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
-        expected_ext_balance = expected_ext_balance
+        expected_ext_balance = expected_ext_balance // 10_000_000_000
     else:
         assert balance is not None
         auth_balance = balance
