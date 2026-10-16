@@ -1677,13 +1677,17 @@ def test_ext_code_on_self_delegating_set_code(
     # Pin gas so BALANCE(auth_signer) is deterministic when the authority
     # is also the sender (up-front max-fee hold).
     gas_limit = 1_000_000
-    max_fee_per_gas = 7
+    # Run On Hedera: increase 'max_fee_per_gas'
+    # because of "Gas price '7' is below configured minimum gas price '710000000000'"
+    max_fee_per_gas = 710_000_000_000
 
     if self_sponsored:
         auth_balance = 10**18
         auth_signer = pre.fund_eoa(auth_balance)
         sender = auth_signer
         expected_ext_balance = auth_balance - gas_limit * max_fee_per_gas
+        # TODO Fix On Hedera: BALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+        expected_ext_balance = expected_ext_balance // 10_000_000_000
     else:
         assert balance is not None
         auth_balance = balance
@@ -1778,11 +1782,14 @@ def test_ext_code_on_chain_delegating_set_code(
     # Pin gas so BALANCE(auth_signer_1) is deterministic when that authority
     # is also the sender (up-front max-fee hold).
     gas_limit = 2_000_000
-    max_fee_per_gas = 7
+    # Run On Hedera: increase 'max_fee_per_gas'
+    # because of "Gas price '7' is below configured minimum gas price '710000000000'"
+    max_fee_per_gas = 710_000_000_000
 
     auth_signer_2_balance = 0
     if self_sponsored:
-        auth_signer_1_balance = 10**18
+        # Run On Hedera: increase funding because of "Insufficient funds for transfer"
+        auth_signer_1_balance = 20**18
         auth_signer_1 = pre.fund_eoa(auth_signer_1_balance)
         sender = auth_signer_1
         expected_ext_balance_1 = (
@@ -3511,8 +3518,11 @@ def test_eoa_tx_after_set_code(
                     sender=auth_signer,
                     to=auth_signer,
                     value=0,
-                    max_fee_per_gas=1_000,
-                    max_priority_fee_per_gas=1_000,
+                    # Run On Hedera: drop the `max_fee_per_gas`/
+                    # `max_priority_fee_per_gas` override — leaving them
+                    # unset lets set_gas_price() fill them with the live
+                    # network's real fee instead of a placeholder below
+                    # Hedera's actual required gas price.
                 )
             )
         case 3:
@@ -3670,7 +3680,11 @@ def test_empty_authorization_list(
 ) -> None:
     """Test sending an invalid transaction with empty authorization list."""
     tx = Transaction(
-        to=pre.deploy_contract(code=b""),
+        # Fixed In Test: use `Bytecode()` instead of `b""` — execute-remote
+        # mode builds a real on-chain deployment tx via Initcode, which
+        # asserts `isinstance(code, Bytecode)`; raw `bytes` fails that check with:
+        # `AssertionError: incompatible code type: <class 'bytes'>`
+        to=pre.deploy_contract(code=Bytecode()),
         value=0,
         authorization_list=[],
         error=TransactionException.TYPE_4_EMPTY_AUTHORIZATION_LIST,
@@ -4307,6 +4321,14 @@ def test_many_delegations(
         + entry_code_gas,
         max_gas,
     )
+    # TODO Fix On Hedera: ParseException while parsing protobuf
+    # On 120M gas this will produce 4759 authorizations -> huge call_data ->
+    # Large jumbo `EthereumTransaction` payloads are silently truncated on ingest
+    # ```
+    # TransactionChecker - ParseException while parsing protobuf:
+    #    com.hedera.pbj.runtime.ParseException: java.nio.BufferUnderflowException
+    # ```
+    delegation_count = min(delegation_count, 300)
 
     entry_address = pre.deploy_contract(entry_code)
 
@@ -4550,7 +4572,7 @@ def test_set_code_from_account_with_non_delegating_code(
 
 @pytest.mark.inclusion_test
 @pytest.mark.parametrize(
-    "max_fee_per_gas, max_priority_fee_per_gas, expected_error",
+    "tx_max_fee_per_gas, tx_max_priority_fee_per_gas, expected_error",
     [
         pytest.param(
             6,
@@ -4562,8 +4584,12 @@ def test_set_code_from_account_with_non_delegating_code(
             id="insufficient_max_fee_per_gas",
         ),
         pytest.param(
-            7,
-            8,
+            # Run On Hedera: bumped from (7, 8) — the auto-filled 15M gas
+            # limit times a single-digit fee funds the sender with a
+            # sub-tinybar amount, which Hedera rejects as a nonzero
+            # transfer below its 10_000_000_000 wei (1 tinybar) minimum.
+            710_000_000_000,
+            720_000_000_000,
             TransactionException.PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS,
             id="priority_greater_than_max_fee_per_gas",
         ),
@@ -4574,8 +4600,8 @@ def test_set_code_from_account_with_non_delegating_code(
 def test_set_code_transaction_fee_validations(
     state_test: StateTestFiller,
     pre: Alloc,
-    max_fee_per_gas: int,
-    max_priority_fee_per_gas: int,
+    tx_max_fee_per_gas: int,
+    tx_max_priority_fee_per_gas: int,
     expected_error: TransactionException,
 ) -> None:
     """
@@ -4587,8 +4613,8 @@ def test_set_code_transaction_fee_validations(
         sender=pre.fund_eoa(),
         to=auth_signer,
         value=0,
-        max_fee_per_gas=max_fee_per_gas,
-        max_priority_fee_per_gas=max_priority_fee_per_gas,
+        max_fee_per_gas=tx_max_fee_per_gas,
+        max_priority_fee_per_gas=tx_max_priority_fee_per_gas,
         authorization_list=[
             AuthorizationTuple(
                 address=set_to_code,

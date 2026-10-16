@@ -25,6 +25,7 @@ from execution_testing.base_types.conversions import (
     BytesConvertible,
     NumberConvertible,
 )
+from execution_testing.execution import scale_sub_tinybar_amount
 from execution_testing.forks import Fork, TransitionFork
 from execution_testing.logging import get_logger
 from execution_testing.recipient_type import RecipientType
@@ -547,6 +548,9 @@ class Alloc(SharedAlloc):
         if storage is None:
             storage = {}
         assert address is None, "address parameter is not supported"
+        # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node
+        # scale it up by the wei-per-tinybar rate
+        balance = scale_sub_tinybar_amount(Number(balance))
         fork = self._fork.fork_at(
             block_number=self._block_number, timestamp=self._timestamp
         )
@@ -682,6 +686,10 @@ class Alloc(SharedAlloc):
         """
         assert nonce is None, "nonce parameter is not supported for execute"
         assert code is None, "code parameter is not supported for execute"
+        if amount is not None:
+            # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node
+            # scale it up by the wei-per-tinybar rate
+            amount = scale_sub_tinybar_amount(Number(amount))
         eoa = next(self._eoa_iterator)
         eoa.label = label
         amount_str = (
@@ -866,6 +874,10 @@ class Alloc(SharedAlloc):
         that multiple fund_address calls can be batched into a single
         RPC round trip.
         """
+        # Run On Hedera: a nonzero value transfer below 1 tinybar is
+        # rejected by the node, so scale it up by the wei-per-tinybar
+        # rate (same treatment as `fund_eoa`/`deploy_contract`).
+        amount = scale_sub_tinybar_amount(Number(amount))
         self._deferred_fund_addresses.append(
             _DeferredFundAddress(
                 address=address,
@@ -1189,19 +1201,14 @@ class Alloc(SharedAlloc):
         )
         for tx in self._pending_txs:
             if tx.value is None:
-                # WARN: This currently fails if there's an account with
-                # `pre.fund_eoa()` that never sends a transaction during test.
-                if tx.to not in sender_balances:
-                    error_message = (
-                        "Sender balance must be set before sending:"
-                        f"\nTransaction: {tx.model_dump_json(indent=2)}"
-                    )
-                    if tx.metadata is not None:
-                        metadata_json = tx.metadata.model_dump_json(indent=2)
-                        error_message += f"\nMetadata: {metadata_json}"
-                    logger.error(error_message)
-                    raise ValueError(error_message)
-                sender_balance = sender_balances[tx.to]
+                # Fixed In Test: fixed failure in 'execute' mode.
+                # When `pre.fund_eoa()` was called without an
+                # amount, so the value is derived from what the EOA needs
+                # to send its own transactions (`sender_balances`). An EOA
+                # that never sends a transaction is absent from
+                # `sender_balances`, so default to 0 and fund it with
+                # nothing.
+                sender_balance = sender_balances.get(tx.to, 0)
                 bal_eth = sender_balance / 10**18
                 logger.info(
                     f"Deferred EOA balance for {tx.to} set to "

@@ -63,8 +63,9 @@ class TransactionType(IntEnum):
 class TransactionDefaults:
     """Default values for transactions."""
 
-    gas_price: int = 10
-    max_fee_per_gas: int = 7
+    # Run On Hedera: Hedera's current network gas price (710 Gwei, via eth_gasPrice)
+    gas_price: int = 710_000_000_000
+    max_fee_per_gas: int = 710_000_000_000
     max_priority_fee_per_gas: int = 0
 
 

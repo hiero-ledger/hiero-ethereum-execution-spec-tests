@@ -12,6 +12,20 @@ from execution_testing.forks import Fork
 from execution_testing.rpc import EngineRPC, EthRPC
 from execution_testing.test_types import Environment
 
+# Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by
+# the node. Tests that only need a small nonzero placeholder (e.g. "1",
+# "100") express it as a tinybar count rather than wei, so scale it up by
+# the wei-per-tinybar rate.
+WEI_TO_TINYBAR = 10_000_000_000
+
+
+def scale_sub_tinybar_amount(value: int) -> int:
+    """Scale a sub-tinybar wei value up by treating it as a tinybar count."""
+    if 0 < value < WEI_TO_TINYBAR:
+        print(f">>>Run On Hedera: scale {value} to {value * WEI_TO_TINYBAR}")
+        return value * WEI_TO_TINYBAR
+    return value
+
 
 class ExecuteResult(CamelModel):
     """

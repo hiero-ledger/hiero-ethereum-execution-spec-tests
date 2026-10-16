@@ -188,7 +188,8 @@ def test_dynamic_create2_selfdestruct_collision(
     )
 
     # Create the sender EOA
-    sender = pre.fund_eoa(7000000000000000000)
+    # Run On Hedera: increase funding because of "Insufficient funds for transfer"
+    sender = pre.fund_eoa()
 
     if create2_dest_already_in_state:
         # Create2 address already in the state, e.g. deployed in a previous
@@ -418,7 +419,8 @@ def test_dynamic_create2_selfdestruct_collision_two_different_transactions(
     )
 
     # Create the sender EOA
-    sender = pre.fund_eoa(7000000000000000000)
+    # Run On Hedera: increase funding because of "Insufficient funds for transfer"
+    sender = pre.fund_eoa()
 
     if create2_dest_already_in_state:
         # Create2 address already in the state, e.g. deployed in a previous
@@ -729,7 +731,8 @@ def test_dynamic_create2_selfdestruct_collision_multi_tx(
     )
 
     # Create the sender EOA
-    sender = pre.fund_eoa(7000000000000000000)
+    # Run On Hedera: increase funding because of "Insufficient funds for transfer"
+    sender = pre.fund_eoa()
 
     post: Dict[Address, Union[Account, object]] = {}
 
