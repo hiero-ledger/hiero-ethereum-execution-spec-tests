@@ -7,7 +7,7 @@
 | 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Fixed | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) |
 | 2 | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data | Issue | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580) |
 | 3 | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing | Triage | — |
-| 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Expected Behaviour | [hiero-ledger/hiero-consensus-node#21633](https://github.com/hiero-ledger/hiero-consensus-node/issues/21633) (related) | Confuguring local Hedera MAX_TRANSACTION_GAS_LIMIT=15M |
+| 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Expected Behaviour | [hiero-ledger/hiero-consensus-node#21633](https://github.com/hiero-ledger/hiero-consensus-node/issues/21633) (related) | Confuguring local Hedera MAX_TRANSACTION_GAS_LIMIT=150M |
 | 5 | (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException` | Issue | [hiero-ledger/hiero-consensus-node#27581](https://github.com/hiero-ledger/hiero-consensus-node/issues/27581) |
 | 6 | (CN) `BALANCE`, `SELFBALANCE` and `CALLVALUE` opcodes return values in tinybar instead of wei | Issue | [hiero-ledger/hiero-consensus-node#27582](https://github.com/hiero-ledger/hiero-consensus-node/issues/27582) |
 | 7 | (CN?) SELFDESTRUCT does not apply when triggered via internal CALL/CALLCODE/DELEGATECALL or during init code | Triage | — |
