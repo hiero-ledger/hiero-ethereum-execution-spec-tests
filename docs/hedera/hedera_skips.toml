@@ -133,6 +133,10 @@ reason = "Run On Hedera: type 3 is not supported"
 prefix = "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumptionBelowDataFloor::test_gas_consumption_below_data_floor[fork_Osaka-state_test-exact_gas-type_3]"
 reason = "Run On Hedera: type 3 is not supported"
 
+[[skip]]
+prefix = "tests/prague/eip7702_set_code_tx/"
+reason = "Run On Hedera: Pectra phase 2"
+
 # ---- Run On Hedera: Amsterdam ----
 
 [[skip]]

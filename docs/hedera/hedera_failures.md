@@ -5,12 +5,12 @@
 | # | Title | Status | Issue | Comment |
 |---|---|---|---|---|
 | 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Fixed | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) | Fixed on Relay side |
-| 2 | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data | Issue | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580) |
+| 2 | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data | Temporary Patched | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580) | `# TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 2` |
 | 3 | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing | Fixed | — | Fixed with `ENABLE_TX_POOL: "true"`, `ENABLE_NONCE_ORDERING: "true"` in `RELAY_RELEASE=0.80.2-rc1` |
 | 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Expected Behaviour | [hiero-ledger/hiero-consensus-node#21633](https://github.com/hiero-ledger/hiero-consensus-node/issues/21633) (related) | Confuguring local Hedera `MAX_TRANSACTION_GAS_LIMIT=150M` |
-| 5 | (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException` | Issue | [hiero-ledger/hiero-consensus-node#27581](https://github.com/hiero-ledger/hiero-consensus-node/issues/27581) |
+| 5 | (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException` | Temporary Patched | [hiero-ledger/hiero-consensus-node#27581](https://github.com/hiero-ledger/hiero-consensus-node/issues/27581) | `# TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 5` |
 | 6 | (CN) `BALANCE`, `SELFBALANCE` and `CALLVALUE` opcodes return values in tinybar instead of wei | Issue | [hiero-ledger/hiero-consensus-node#27582](https://github.com/hiero-ledger/hiero-consensus-node/issues/27582) |
-| 7 | (CN?) SELFDESTRUCT does not apply when triggered via internal CALL/CALLCODE/DELEGATECALL or during init code | Triage | — |
+| 7 | (CN?) SELFDESTRUCT does not apply when triggered via internal CALL/CALLCODE/DELEGATECALL or during init code | Skip Temporary | — |
 | 8 | (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure | Triage | — |
 | 9 | (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera | Triage | — |
 | 10 | (CN?) Warm-access gas cost not honored — repeat accesses (EIP-2929) and coinbase pre-warming (EIP-3651) | Issue | [hiero-ledger/hiero-consensus-node#21335](https://github.com/hiero-ledger/hiero-consensus-node/issues/21335) (COINBASE part only) |
@@ -27,6 +27,7 @@
 | 21 | (CN?) EIP-7702 authorization tuple does not write delegation designation code | Triage | — |
 | 22 | (CN?) Delegated EOA used as transaction sender is not found as an existing account | Triage | — |
 | 23 | (Relay/Mirror node) Account-state queries for a deleted (self-destructed) contract fail with `-32020` mirror node 500 | Triage | — |
+| 24 | Pectra Phase 2 | Skip Temporary | — | |
 
 
 ## Details
@@ -970,3 +971,6 @@
     tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_recreate_self_destructed_contract_different_txs[fork_Prague-blockchain_test-call_times_1-recreate_times_1-selfdestruct_contract_initial_balance_0-selfdestruct_other_address-create_opcode_CREATE2]
     tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_recreate_self_destructed_contract_different_txs[fork_Prague-blockchain_test-call_times_1-recreate_times_1-selfdestruct_contract_initial_balance_100000-selfdestruct_other_address-create_opcode_CREATE2]
     ```
+---
+### 24. Pectra Phase 2
+Pectra Phase 2 should fix bunch of failures at `tests/prague/eip7702_set_code_tx/`. For now this tests was skipped
