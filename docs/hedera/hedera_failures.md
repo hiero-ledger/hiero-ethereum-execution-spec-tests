@@ -4,10 +4,10 @@
 
 | # | Title | Status | Issue | Comment |
 |---|---|---|---|---|
-| 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Fixed | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) |
+| 1 | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field | Fixed | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858) | Fixed on Relay side |
 | 2 | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data | Issue | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580) |
-| 3 | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing | Triage | — |
-| 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Expected Behaviour | [hiero-ledger/hiero-consensus-node#21633](https://github.com/hiero-ledger/hiero-consensus-node/issues/21633) (related) | Confuguring local Hedera MAX_TRANSACTION_GAS_LIMIT=150M |
+| 3 | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing | Fixed | — | Fixed with `ENABLE_TX_POOL: "true"`, `ENABLE_NONCE_ORDERING: "true"` in `RELAY_RELEASE=0.80.2-rc1` |
+| 4 | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit | Expected Behaviour | [hiero-ledger/hiero-consensus-node#21633](https://github.com/hiero-ledger/hiero-consensus-node/issues/21633) (related) | Confuguring local Hedera `MAX_TRANSACTION_GAS_LIMIT=150M` |
 | 5 | (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException` | Issue | [hiero-ledger/hiero-consensus-node#27581](https://github.com/hiero-ledger/hiero-consensus-node/issues/27581) |
 | 6 | (CN) `BALANCE`, `SELFBALANCE` and `CALLVALUE` opcodes return values in tinybar instead of wei | Issue | [hiero-ledger/hiero-consensus-node#27582](https://github.com/hiero-ledger/hiero-consensus-node/issues/27582) |
 | 7 | (CN?) SELFDESTRUCT does not apply when triggered via internal CALL/CALLCODE/DELEGATECALL or during init code | Triage | — |
@@ -97,32 +97,6 @@
         --tx-wait-timeout=15 \
         "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption"
     ```
-
-   With ENABLE_TX_POOL, ENABLE_NONCE_ORDERING enabled it ia failing with 'unexpected nonce for account + Transaction rejected: WRONG_NONCE' or 'Nonce too low' 
-
-   Example:
-   1. 'unexpected nonce for account + Transaction rejected: WRONG_NONCE'
-   ```
-   uv run execute remote -rA -vv --fork=Prague \
-        --rpc-endpoint=http://localhost:37546/ \
-        --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
-        --rpc-chain-id=298 \
-        --seed-account-sweep-amount='1_000_000 ether' \
-        --default-max-fee-per-blob-gas=710_000_000_000 \
-        --tx-wait-timeout=15 \
-        "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-stop-tx_value_0]"
-   ```
-   2. Nonce too low
-   ```
-   uv run execute remote -rA -vv --fork=Prague \
-        --rpc-endpoint=http://localhost:37546/ \
-        --rpc-seed-key=0xde78ff4e5e77ec2bf28ef7b446d4bec66e06d39b6e6967864b2bf3d6153f3e68 \
-        --rpc-chain-id=298 \
-        --seed-account-sweep-amount='1_000_000 ether' \
-        --default-max-fee-per-blob-gas=710_000_000_000 \
-        --tx-wait-timeout=15 \
-        "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption"
-   ```
 
    Workaround: add `--max-tx-per-batch=1`.
 
