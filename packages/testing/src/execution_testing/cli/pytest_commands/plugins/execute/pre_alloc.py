@@ -548,8 +548,8 @@ class Alloc(SharedAlloc):
         if storage is None:
             storage = {}
         assert address is None, "address parameter is not supported"
-        # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node
-        # scale it up by the wei-per-tinybar rate
+        # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node,
+        # so scale it up by the wei-per-tinybar rate.
         balance = scale_sub_tinybar_amount(Number(balance))
         fork = self._fork.fork_at(
             block_number=self._block_number, timestamp=self._timestamp
@@ -687,8 +687,8 @@ class Alloc(SharedAlloc):
         assert nonce is None, "nonce parameter is not supported for execute"
         assert code is None, "code parameter is not supported for execute"
         if amount is not None:
-            # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node
-            # scale it up by the wei-per-tinybar rate
+            # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node,
+            # so scale it up by the wei-per-tinybar rate.
             amount = scale_sub_tinybar_amount(Number(amount))
         eoa = next(self._eoa_iterator)
         eoa.label = label
@@ -874,8 +874,8 @@ class Alloc(SharedAlloc):
         that multiple fund_address calls can be batched into a single
         RPC round trip.
         """
-        # Run On Hedera: a nonzero value transfer below 1 tinybar is
-        # rejected by the node, so scale it up by the wei-per-tinybar
+        # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node,
+        # so scale it up by the wei-per-tinybar rate.
         # rate (same treatment as `fund_eoa`/`deploy_contract`).
         amount = scale_sub_tinybar_amount(Number(amount))
         self._deferred_fund_addresses.append(

@@ -77,8 +77,8 @@ class TransactionPost(BaseExecute):
                     max_priority_fee_per_gas=max_priority_fee_per_gas,
                     max_fee_per_blob_gas=max_fee_per_blob_gas,
                 )
-                # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node
-                # scale it up by the wei-per-tinybar rate
+                # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node,
+                # so scale it up by the wei-per-tinybar rate.
                 tx.value = scale_sub_tinybar_amount(Number(tx.value))
 
     def get_required_sender_balances(

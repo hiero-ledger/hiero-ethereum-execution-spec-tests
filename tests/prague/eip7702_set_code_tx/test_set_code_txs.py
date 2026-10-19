@@ -1686,7 +1686,8 @@ def test_ext_code_on_self_delegating_set_code(
         auth_signer = pre.fund_eoa(auth_balance)
         sender = auth_signer
         expected_ext_balance = auth_balance - gas_limit * max_fee_per_gas
-        # TODO Fix On Hedera: BALANCE return value in tinybar, 10_000_000_000 wei = 1 tinybar
+        # TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 6
+        #  BALANCE opcode return value in tinybar, 10_000_000_000 wei = 1 tinybar
         expected_ext_balance = expected_ext_balance // 10_000_000_000
     else:
         assert balance is not None
@@ -4321,7 +4322,7 @@ def test_many_delegations(
         + entry_code_gas,
         max_gas,
     )
-    # TODO Fix On Hedera: ParseException while parsing protobuf
+    # TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 5
     # On 120M gas this will produce 4759 authorizations -> huge call_data ->
     # Large jumbo `EthereumTransaction` payloads are silently truncated on ingest
     # ```
