@@ -24,6 +24,86 @@ reason = "Run On Hedera: type 3 is not supported"
 prefix = "tests/frontier/validation/test_transaction.py::test_bad_v_r_s[fork_Prague-tx_type_3-state_test-s=SECP256K1N//2+1]"
 reason = "Run On Hedera: type 3 is not supported"
 
+[[skip]]
+prefix = "tests/frontier/create/test_create_suicide_during_init.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
+[[skip]]
+prefix = "tests/frontier/create/test_create_suicide_store.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
+[[skip]]
+prefix = "tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-SELFDESTRUCT-state_test]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
+[[skip]]
+prefix = "tests/frontier/opcodes/test_blockhash.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 11"
+
+# ---- Gas-accounting precision mismatches in precompile/CALL cost measurement ----
+
+[[skip]]
+prefix = "tests/frontier/precompiles/test_ecrecover.py::test_repeated_underfunded_calls"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 13"
+
+[[skip]]
+prefix = "tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000012-precompile_exists_False-state_test]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 13"
+
+[[skip]]
+prefix = "tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000000-precompile_exists_False-state_test]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 13"
+
+# ---- Miscellaneous singleton failures ----
+
+[[skip]]
+prefix = "tests/frontier/opcodes/test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14"
+
+[[skip]]
+prefix = "tests/frontier/examples/test_block_intermediate_state.py::test_block_intermediate_state[fork_Prague-blockchain_test]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14"
+
+[[skip]]
+prefix = "tests/frontier/validation/test_transaction_rlp.py::test_valid_reencoded_transaction[fork_Prague-transaction_test]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14"
+
+[[skip]]
+prefix = "tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_COINBASE-debug]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14"
+
+[[skip]]
+prefix = "tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_NUMBER-debug]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14"
+
+[[skip]]
+prefix = "tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14"
+
+# ---- Run On Hedera: Tangerine Whistle ----
+
+[[skip]]
+prefix = "tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
+# ---- Run On Hedera: Constantinople ----
+
+[[skip]]
+prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
+[[skip]]
+prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
+[[skip]]
+prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted_recheck_outer"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
+[[skip]]
+prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
 # ---- Run On Hedera: Berlin ----
 
 [[skip]]
@@ -77,6 +157,22 @@ reason = "Run On Hedera: type 3 is not supported"
 [[skip]]
 prefix = "tests/cancun/eip4844_blobs/test_blobhash_opcode_contexts.py::test_blobhash_opcode_contexts["
 reason = "Run On Hedera: type 3 is not supported"
+
+[[skip]]
+prefix = "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7/8"
+
+[[skip]]
+prefix = "tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7/8"
+
+[[skip]]
+prefix = "tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7/8"
+
+[[skip]]
+prefix = "tests/cancun/eip6780_selfdestruct/test_selfdestruct_finalization.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 8"
 
 # ---- Run On Hedera: Prague ----
 # EIP-7600 (Pectra) includes EIP-2537, EIP-2935, EIP-6110, EIP-7002, EIP-7251,

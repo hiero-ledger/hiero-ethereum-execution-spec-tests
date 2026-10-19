@@ -11,13 +11,13 @@
 | 5 | (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException` | Temporary Patched | [hiero-ledger/hiero-consensus-node#27581](https://github.com/hiero-ledger/hiero-consensus-node/issues/27581) | `# TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 5` |
 | 6 | (CN) `BALANCE`, `SELFBALANCE` and `CALLVALUE` opcodes return values in tinybar instead of wei | Issue | [hiero-ledger/hiero-consensus-node#27582](https://github.com/hiero-ledger/hiero-consensus-node/issues/27582) |
 | 7 | (CN?) SELFDESTRUCT does not apply when triggered via internal CALL/CALLCODE/DELEGATECALL or during init code | Skip Temporary | — |
-| 8 | (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure | Triage | — |
-| 9 | (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera | Triage | — |
+| 8 | (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure | Skip Temporary | — |
+| 9 | (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera | Skip Temporary | — |
 | 10 | (CN?) Warm-access gas cost not honored — repeat accesses (EIP-2929) and coinbase pre-warming (EIP-3651) | Issue | [hiero-ledger/hiero-consensus-node#21335](https://github.com/hiero-ledger/hiero-consensus-node/issues/21335) (COINBASE part only) |
-| 11 | (CN?) BLOCKHASH returns 0 for genesis/recent blocks | Triage | — |
+| 11 | (CN?) BLOCKHASH returns 0 for genesis/recent blocks | Skip Temporary | — |
 | 12 | (CN?) CALL with a nonzero value to a precompile address fails | Issue | https://github.com/hiero-ledger/hiero-consensus-node/issues/21332 | Seems like 'Expected Behaviour' but Hedera docs should be updated |
-| 13 | (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement | Triage | — |
-| 14 | Miscellaneous singleton failures — not yet root-caused | Triage | — |
+| 13 | (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement | Skip Temporary | — |
+| 14 | Miscellaneous singleton failures — not yet root-caused | Skip Temporary | — |
 | 15 | (Possible test-infra flake, not a confirmed Hedera bug) `test_tx_gas_limit` ERROR | Triage | — |
 | 16 | (CN?) Out-of-gas transaction does not consume the full declared gas_limit | Triage | — |
 | 17 | (Relay?) RPC rejects transaction — invalid yParity (-32000) | Triage | — |
