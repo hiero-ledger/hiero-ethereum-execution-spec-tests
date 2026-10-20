@@ -13,8 +13,14 @@
 
 ## Skipped tests
 
-1. All tests that are not supported by Hedera, skipped with a reason at [Skip List](docs/hedera/hedera_skips.toml)
-2. All other skipped tests are skipped and managed by repo owners
+1. All tests that are not supported by Hedera, skipped with a reason at [Skip List](docs/hedera/hedera_skips.toml).
+All Hedera skips have related **Skip Groups:**
+   1. `ACCEPTED_INCOMPATIBILITY`: These are the acknowledged incompatibilities, like type3 transactions where we will not be compatible.
+   2. `UNKNOWN_INCOMPATIBILITY`: Detected, unknown reason, needs investigation.
+   3. `KNOWN_INCOMPATIBILITY`: Detected, known reasoning, fix pending. Example: Pectra EIP-7702.
+   4. `FRAMEWORK_BUG`: Skipped due to a framework bug.
+
+2. All other skipped tests are skipped and managed by original ethereum spec test repo community
 
 # Require Fix On Hedera
 

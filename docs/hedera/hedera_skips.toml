@@ -2,207 +2,207 @@
 # Each entry skips every test whose node id starts with `prefix`.
 # Loaded by the `hedera_skips` pytest plugin.
 
-# ---- Run On Hedera: Frontier ----
+# ---- Frontier ----
 
 [[skip]]
 prefix = "tests/frontier/precompiles/test_precompile_absence.py"
-reason = "Run On Hedera: Seems like a bug in the test implementation. The same test passes under 'fill'. Raises internal error at `pre.deploy_contract`: 'initcode prefix too long' but this test can be safely skipped"
+reason = "Hedera FRAMEWORK_BUG: Seems like a bug in the test implementation. The same test passes under 'fill'. Raises internal error at `pre.deploy_contract`: 'initcode prefix too long' but this test can be safely skipped"
 
 [[skip]]
 prefix = "tests/frontier/validation/test_transaction.py::test_bad_v_r_s[fork_Prague-tx_type_3-state_test-v_34-r_1-s_1]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/frontier/validation/test_transaction.py::test_bad_v_r_s[fork_Prague-tx_type_3-state_test-v_27-r_115792089237316195423570985008687907852837564279074904382605163141518161494337-s_1]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/frontier/validation/test_transaction.py::test_bad_v_r_s[fork_Prague-tx_type_3-state_test-s=SECP256K1N]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/frontier/validation/test_transaction.py::test_bad_v_r_s[fork_Prague-tx_type_3-state_test-s=SECP256K1N//2+1]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALL]"
-reason = "Run On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 12. Deselect Due incompatibility: CALL with a nonzero value to a precompile address"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 12. CALL with a nonzero value to a precompile address"
 
 [[skip]]
 prefix = "tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALLCODE]"
-reason = "Run On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 12. Deselect Due incompatibility: CALL with a nonzero value to a precompile address"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 12. CALL with a nonzero value to a precompile address"
 
 [[skip]]
 prefix = "tests/frontier/create/test_create_suicide_during_init.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
 
 [[skip]]
 prefix = "tests/frontier/create/test_create_suicide_store.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
 
 [[skip]]
 prefix = "tests/frontier/opcodes/test_all_opcodes.py::test_constant_gas[fork_Prague-SELFDESTRUCT-state_test]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
 
 [[skip]]
 prefix = "tests/frontier/opcodes/test_blockhash.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 11. BLOCKHASH returns 0 for genesis/recent blocks"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 11. BLOCKHASH returns 0 for genesis/recent blocks"
 
 # ---- Gas-accounting precision mismatches in precompile/CALL cost measurement ----
 
 [[skip]]
 prefix = "tests/frontier/precompiles/test_ecrecover.py::test_repeated_underfunded_calls"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 13. Gas-accounting precision mismatches in precompile/CALL cost measurement"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 13. Gas-accounting precision mismatches in precompile/CALL cost measurement"
 
 [[skip]]
 prefix = "tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000012-precompile_exists_False-state_test]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 13. Gas-accounting precision mismatches in precompile/CALL cost measurement"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 13. Gas-accounting precision mismatches in precompile/CALL cost measurement"
 
 [[skip]]
 prefix = "tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-address_0x0000000000000000000000000000000000000000-precompile_exists_False-state_test]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 13. Gas-accounting precision mismatches in precompile/CALL cost measurement"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 13. Gas-accounting precision mismatches in precompile/CALL cost measurement"
 
 # ---- Miscellaneous singleton failures ----
 
 [[skip]]
 prefix = "tests/frontier/opcodes/test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
 
 [[skip]]
 prefix = "tests/frontier/examples/test_block_intermediate_state.py::test_block_intermediate_state[fork_Prague-blockchain_test]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
 
 [[skip]]
 prefix = "tests/frontier/validation/test_transaction_rlp.py::test_valid_reencoded_transaction[fork_Prague-transaction_test]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
 
 [[skip]]
 prefix = "tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_COINBASE-debug]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
 
 [[skip]]
 prefix = "tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_NUMBER-debug]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
 
 [[skip]]
 prefix = "tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
 
-# ---- Run On Hedera: Tangerine Whistle ----
+# ---- Tangerine Whistle ----
 
 [[skip]]
 prefix = "tests/tangerine_whistle/eip150_operation_gas_costs/test_eip150_selfdestruct.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
 
-# ---- Run On Hedera: Constantinople ----
+# ---- Constantinople ----
 
 [[skip]]
 prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
 
 [[skip]]
 prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
 
 [[skip]]
 prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted_recheck_outer"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
 
 [[skip]]
 prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply"
 
 [[skip]]
 prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 8. CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 8. CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure"
 
 [[skip]]
 prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_dynamic_argument[fork_Prague-state_test-target_type_precompile_with_balance]"
-reason = "Run On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 12. Deselect Due incompatibility: CALL with a nonzero value to a precompile address"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 12. CALL with a nonzero value to a precompile address"
 
-# ---- Run On Hedera: Berlin ----
+# ---- Berlin ----
 
 [[skip]]
 prefix = "tests/berlin/eip2929_gas_cost_increases/test_create.py::test_create_nonce_overflow"
-reason = "Run On Hedera: This test can only be run in a 'fill' mode. And we are running tests in execute remote mode to Hedera network. Details: deploy_contract(nonce=2**64-1) can't be realized in execute mode — the contract is deployed via one real CREATE tx, so its on-chain nonce is actually 1, not the requested overflow value. CREATE legitimately succeeds against the real (non-overflowed) nonce, so this isn't a Hedera bug, it's a fill-only test premise."
+reason = "Hedera FRAMEWORK_BUG: This test can only be run in a 'fill' mode. And we are running tests in execute remote mode to Hedera network. Details: deploy_contract(nonce=2**64-1) can't be realized in execute mode — the contract is deployed via one real CREATE tx, so its on-chain nonce is actually 1, not the requested overflow value. CREATE legitimately succeeds against the real (non-overflowed) nonce, so this isn't a Hedera bug, it's a fill-only test premise."
 
-# ---- Run On Hedera: London ----
+# ---- London ----
 
 [[skip]]
 prefix = "tests/london/eip1559_fee_market_change/test_tx_type.py::test_invalid_chain_id[fork_Prague-tx_type_3-state_test]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
-# ---- Run On Hedera: Paris ----
+# ---- Paris ----
 
 [[skip]]
 prefix = "tests/paris/security/test_selfdestruct_balance_bug.py"
-reason = "Run On Hedera: `SELFDESTRUCT` in the same transaction as the contract's creation, with itself as beneficiary, halts with `SELF_DESTRUCT_TO_SELF` Details: https://github.com/hiero-ledger/hiero-consensus-node/issues/17477 -> 2nd case"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: `SELFDESTRUCT` in the same transaction as the contract's creation, with itself as beneficiary, halts with `SELF_DESTRUCT_TO_SELF` Details: https://github.com/hiero-ledger/hiero-consensus-node/issues/17477 -> 2nd case"
 
-# ---- Run On Hedera: Shanghai ----
+# ---- Shanghai ----
 
 [[skip]]
 prefix = "tests/shanghai/eip4895_withdrawals/"
-reason = "Run On Hedera: Hedera does not support EIP-4895; these tests can be safely skipped."
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: Hedera does not support EIP-4895; these tests can be safely skipped."
 
 [[skip]]
 prefix = "tests/shanghai/eip3860_initcode/test_initcode.py::TestContractCreationGasUsage::test_gas_usage[fork_Prague-state_test-initcode_name_empty-gas_test_case_exact"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 24. Contract creation with empty initcode is rejected as `INVALID_ETHEREUM_TRANSACTION`"
+reason = "Hedera KNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 24. Contract creation with empty initcode is rejected as `INVALID_ETHEREUM_TRANSACTION`"
 
-# ---- Run On Hedera: Cancun ----
+# ---- Cancun ----
 
 [[skip]]
 prefix = "tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py"
-reason = "Run On Hedera: `SELFDESTRUCT(0)` halts with INVALID_SOLIDITY_ADDRESS, the beneficiary must be an existing account. Details: https://docs.hedera.com/evm/development/deploying#solidity-variables-and-opcodes -> SELFDESTRUCT -> `If the recipient does not exist or does not have an allowance for any of the HTS tokens, this opcode will fail.`"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: `SELFDESTRUCT(0)` halts with INVALID_SOLIDITY_ADDRESS, the beneficiary must be an existing account. Details: https://docs.hedera.com/evm/development/deploying#solidity-variables-and-opcodes -> SELFDESTRUCT -> `If the recipient does not exist or does not have an allowance for any of the HTS tokens, this opcode will fail.`"
 
 [[skip]]
 prefix = "tests/cancun/eip4788_beacon_root/"
-reason = "Run On Hedera: There is no beacon root contract in Hedera. Hedera is incomparable with https://eips.ethereum.org/EIPS/eip-4788"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: There is no beacon root contract in Hedera. Hedera is incomparable with https://eips.ethereum.org/EIPS/eip-4788"
 
 [[skip]]
 prefix = "tests/cancun/eip4844_blobs/test_blob_txs.py"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/cancun/eip4844_blobs/test_blob_txs_full.py"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/cancun/eip4844_blobs/test_blobhash_opcode.py"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/cancun/eip4844_blobs/test_excess_blob_gas.py"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/cancun/eip4844_blobs/test_blobhash_opcode_contexts.py::test_blobhash_opcode_contexts["
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply/8"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply/8"
 
 [[skip]]
 prefix = "tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply/8"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply/8"
 
 [[skip]]
 prefix = "tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply/8"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 7. SELFDESTRUCT does not apply/8"
 
 [[skip]]
 prefix = "tests/cancun/eip6780_selfdestruct/test_selfdestruct_finalization.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 8. CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 8. CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure"
 
 [[skip]]
 prefix = "tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 8. CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 8. CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure"
 
 [[skip]]
 prefix = "tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 16. Out-of-gas transaction does not consume the full declared gas_limit"
+reason = "Hedera UNKNOWN_INCOMPATIBILITY: Details: docs/hedera/hedera_failures.md -> Details -> 16. Out-of-gas transaction does not consume the full declared gas_limit"
 
-# ---- Run On Hedera: Prague ----
+# ---- Prague ----
 # EIP-7600 (Pectra) includes EIP-2537, EIP-2935, EIP-6110, EIP-7002, EIP-7251,
 # EIP-7549, EIP-7623, EIP-7685, EIP-7691, EIP-7702.
 # Hedera supports EIP-2537, EIP-7623, EIP-7702 as part of its Prague Upgrade:
@@ -211,74 +211,74 @@ reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details
 
 [[skip]]
 prefix = "tests/prague/eip2935_historical_block_hashes_from_state/"
-reason = "Run On Hedera: L2 related issues are not applicable to Hedera"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: L2 related issues are not applicable to Hedera"
 
 [[skip]]
 prefix = "tests/prague/eip6110_deposits/"
-reason = "Run On Hedera: Eth2 validator related issues are not applicable to Hedera"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: Eth2 validator related issues are not applicable to Hedera"
 
 [[skip]]
 prefix = "tests/prague/eip7002_el_triggerable_withdrawals/"
-reason = "Run On Hedera: Eth2 validator related issues are not applicable to Hedera"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: Eth2 validator related issues are not applicable to Hedera"
 
 [[skip]]
 prefix = "tests/prague/eip7251_consolidations/"
-reason = "Run On Hedera: Eth2 validator related issues are not applicable to Hedera"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: Eth2 validator related issues are not applicable to Hedera"
 
 [[skip]]
 prefix = "tests/prague/eip7685_general_purpose_el_requests/"
-reason = "Run On Hedera: Eth2 validator related issues are not applicable to Hedera"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: Eth2 validator related issues are not applicable to Hedera"
 
 [[skip]]
 prefix = "tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py::test_transaction_validity_type_3"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption[fork_Prague-state_test-extra_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption[fork_Prague-state_test-exact_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption[fork_Osaka-state_test-extra_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption[fork_Osaka-state_test-exact_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumptionBelowDataFloor::test_gas_consumption_below_data_floor[fork_Prague-state_test-exact_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py::TestGasConsumptionBelowDataFloor::test_gas_consumption_below_data_floor[fork_Osaka-state_test-exact_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/prague/eip7702_set_code_tx/"
-reason = "Run On Hedera: Pectra phase 2"
+reason = "Hedera KNOWN_INCOMPATIBILITY: Pectra phase 2"
 
-# ---- Run On Hedera: Amsterdam ----
+# ---- Amsterdam ----
 
 [[skip]]
 prefix = "tests/amsterdam/eip7976_increase_calldata_floor_cost/test_transaction_validity.py::test_transaction_validity_type_3"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/amsterdam/eip7976_increase_calldata_floor_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption[fork_Amsterdam-state_test-extra_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/amsterdam/eip7976_increase_calldata_floor_cost/test_execution_gas.py::TestGasConsumption::test_full_gas_consumption[fork_Amsterdam-state_test-exact_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/amsterdam/eip7976_increase_calldata_floor_cost/test_execution_gas.py::TestGasConsumptionBelowDataFloor::test_gas_consumption_below_data_floor[fork_Amsterdam-state_test-exact_gas-type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
 
 [[skip]]
 prefix = "tests/amsterdam/eip7976_increase_calldata_floor_cost/test_eip_mainnet.py::test_eip_7976[fork_Amsterdam-state_test----type_3]"
-reason = "Run On Hedera: type 3 is not supported"
+reason = "Hedera ACCEPTED_INCOMPATIBILITY: type 3 is not supported"
