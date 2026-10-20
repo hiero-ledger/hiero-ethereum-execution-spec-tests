@@ -146,7 +146,7 @@ reason = "Run On Hedera: Hedera does not support EIP-4895; these tests can be sa
 
 [[skip]]
 prefix = "tests/shanghai/eip3860_initcode/test_initcode.py::TestContractCreationGasUsage::test_gas_usage[fork_Prague-state_test-initcode_name_empty-gas_test_case_exact"
-reason = "Run On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 24. Contract creation with empty initcode is rejected as `INVALID_ETHEREUM_TRANSACTION`"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 24. Contract creation with empty initcode is rejected as `INVALID_ETHEREUM_TRANSACTION`"
 
 # ---- Run On Hedera: Cancun ----
 
