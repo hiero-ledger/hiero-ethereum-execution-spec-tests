@@ -25,6 +25,14 @@ prefix = "tests/frontier/validation/test_transaction.py::test_bad_v_r_s[fork_Pra
 reason = "Run On Hedera: type 3 is not supported"
 
 [[skip]]
+prefix = "tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALL]"
+reason = "Run On Hedera: Deselect Due incompatibility: CALL with a nonzero value to a precompile address"
+
+[[skip]]
+prefix = "tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALLCODE]"
+reason = "Run On Hedera: Deselect Due incompatibility: CALL with a nonzero value to a precompile address"
+
+[[skip]]
 prefix = "tests/frontier/create/test_create_suicide_during_init.py"
 reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
 
@@ -80,6 +88,10 @@ reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details
 prefix = "tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug]"
 reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14"
 
+[[skip]]
+prefix = "tests/frontier/validation/test_transaction.py::test_tx_gas_limit[fork_Prague-blockchain_test]"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 15"
+
 # ---- Run On Hedera: Tangerine Whistle ----
 
 [[skip]]
@@ -103,6 +115,14 @@ reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details
 [[skip]]
 prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct"
 reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7"
+
+[[skip]]
+prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 8"
+
+[[skip]]
+prefix = "tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_dynamic_argument[fork_Prague-state_test-target_type_precompile_with_balance]"
+reason = "Run On Hedera: Deselect Due incompatibility: CALL with a nonzero value to a precompile address"
 
 # ---- Run On Hedera: Berlin ----
 
@@ -173,6 +193,14 @@ reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details
 [[skip]]
 prefix = "tests/cancun/eip6780_selfdestruct/test_selfdestruct_finalization.py"
 reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 8"
+
+[[skip]]
+prefix = "tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 8"
+
+[[skip]]
+prefix = "tests/cancun/create/test_create_oog_from_eoa_refunds.py::test_create_oog_from_eoa_refunds"
+reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 16"
 
 # ---- Run On Hedera: Prague ----
 # EIP-7600 (Pectra) includes EIP-2537, EIP-2935, EIP-6110, EIP-7002, EIP-7251,

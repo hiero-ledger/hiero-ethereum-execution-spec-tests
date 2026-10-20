@@ -21,15 +21,21 @@
 
 # Fork Groups Runs
 
-## ⚠️[Prague](docs/hedera/hedera_prague.md)
-## ⚠️[Cancun](docs/hedera/hedera_cancun.md)
-## ⚠️[Shanghai](docs/hedera/hedera_shanghai.md)
-## ✅[Paris](docs/hedera/hedera_paris.md)
-## ✅[London](docs/hedera/hedera_london.md)
-## ✅[Berlin](docs/hedera/hedera_berlin.md)
-## ✅[Istanbul](docs/hedera/hedera_istanbul.md)
-## ⚠️[Constantinople](docs/hedera/hedera_constantinople.md)
-## ✅[Byzantium](docs/hedera/hedera_byzantium.md)
-## ⚠️[Tangerine Whistle](docs/hedera/hedera_tangerine_whistle.md)
-## ✅[Homestead](docs/hedera/hedera_homestead.md)
-## ⚠️[Frontier](docs/hedera/hedera_frontier.md)
+✅ - Fully passing on Hedera
+
+▶️️ - Contains 'Skip Temporary' failures group that are skipped
+
+⚠️ - Contains failures that are still require a fix
+
+## ▶️️ [Prague](docs/hedera/hedera_prague.md)
+## ▶️️ [Cancun](docs/hedera/hedera_cancun.md)
+## ⚠️ [Shanghai](docs/hedera/hedera_shanghai.md)
+## ✅ [Paris](docs/hedera/hedera_paris.md)
+## ✅ [London](docs/hedera/hedera_london.md)
+## ✅ [Berlin](docs/hedera/hedera_berlin.md)
+## ✅ [Istanbul](docs/hedera/hedera_istanbul.md)
+## ▶️️ [Constantinople](docs/hedera/hedera_constantinople.md)
+## ✅ [Byzantium](docs/hedera/hedera_byzantium.md)
+## ▶️️ [Tangerine Whistle](docs/hedera/hedera_tangerine_whistle.md)
+## ✅ [Homestead](docs/hedera/hedera_homestead.md)
+## ⚠️ [Frontier](docs/hedera/hedera_frontier.md)
