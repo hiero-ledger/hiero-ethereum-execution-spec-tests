@@ -88,10 +88,6 @@ reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details
 prefix = "tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug]"
 reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 14. Miscellaneous singleton failures — not yet root-caused"
 
-[[skip]]
-prefix = "tests/frontier/validation/test_transaction.py::test_tx_gas_limit[fork_Prague-blockchain_test]"
-reason = "TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 15"
-
 # ---- Run On Hedera: Tangerine Whistle ----
 
 [[skip]]

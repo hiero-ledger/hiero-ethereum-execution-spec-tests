@@ -18,7 +18,7 @@
 | 12 | (CN?) CALL with a nonzero value to a precompile address fails | Deselect Due incompatibility | https://github.com/hiero-ledger/hiero-consensus-node/issues/21332 | Seems like 'Expected Behaviour' but Hedera docs should be updated |
 | 13 | (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement | Skip Temporary | — |
 | 14 | Miscellaneous singleton failures — not yet root-caused | Skip Temporary | — |
-| 15 | (Possible test-infra flake, not a confirmed Hedera bug) `test_tx_gas_limit` ERROR | Skip Temporary | — |
+| 15 | `test_tx_gas_limit`: the block gas limit can't be lowered in `execute remote` mode | Expected Behaviour | — |
 | 16 | (CN?) Out-of-gas transaction does not consume the full declared gas_limit | Skip Temporary | — |
 | 17 | (Relay?) RPC rejects transaction — invalid yParity (-32000) | Skip Temporary | — | Pectra EIP-7707 |
 | 18 | (Relay?) Zero-value r/s in authorization tuple serialized as empty '0x' | Skip Temporary | — | Pectra EIP-7707 |
@@ -595,14 +595,16 @@ tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchai
 ```
 
 ---
-### 15. (Possible test-infra flake, not a confirmed Hedera bug) `test_tx_gas_limit` ERROR
-**Pattern:** `ERROR ... JSONRPCError(code=-32003, message=Transaction rejected: WRONG_NONCE)`
+### 15. `test_tx_gas_limit`: the block gas limit can't be lowered in `execute remote` mode
+**Pattern:** `Failed: DID NOT RAISE <class 'execution_testing.rpc.rpc.SendTransactionExceptionError'>` at `transaction_post.py` — the test expects the node to reject the transaction with `GAS_ALLOWANCE_EXCEEDED`, but the node accepts it.
 
-**Root cause:** Not confirmed as a genuine Hedera limitation. The failing transaction's `to` field is the session's own worker/seed key address, not the test's own `to = pre.fund_eoa()` target — this looks like a background funding/sweep transaction from shared session infrastructure hit a nonce race, misattributed to this test in the summary, rather than something about `test_tx_gas_limit`'s own content (which already carries an unrelated `# Run On Hedera` fix for its `gas_price`). Needs an isolated re-run to confirm before treating as a real issue.
+**Root cause:** Not a Hedera bug, a limitation of `execute remote` mode. The test sets `block_gas_limit = 100_000` and sends a transaction with `gas_limit = 100_001`, expecting it to exceed the block gas limit. In `execute remote` mode `env.gas_limit` and the header `rlp_modifier` only change the test's local view; the live network's block gas limit stays at `150_000_000` (see item 4), so the transaction fits and is accepted. An earlier run of this test showed a `WRONG_NONCE` error on a transaction sent to the session's own seed key address. That was a background funding/sweep transaction from shared session infrastructure, not this test's content, and it did not reproduce in an isolated run.
 
-**Total:** 1 (unconfirmed)
+**Fixed In Test:** `block_gas_limit` is set to `150_000_000` (the network's real limit) with a `# Run On Hedera:` comment at `tests/frontier/validation/test_transaction.py`. The `gas_limit + 1` transaction is then rejected and the test passes.
 
-**Unconfirmed — 1 test**
+**Total:** 1
+
+**Hedera-only — 1 test**
 ```
 tests/frontier/validation/test_transaction.py::test_tx_gas_limit[fork_Prague-blockchain_test]
 ```

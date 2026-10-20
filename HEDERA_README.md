@@ -7,6 +7,7 @@
   4. `Run On Hedera: increase funding because of "Insufficient funds for transfer"` - Requires more balance for some tests
   5. `Run On Hedera: round up to the nearest whole tinybar` - Hedera only tracks balances in whole tinybars.
   6. `Run On Hedera: Useful for viewing and debugging JSON-RPC Relay errors` - Debug purpose
+  7. `Run On Hedera: the Hedera network's block gas limit is fixed at 150_000_000` - static change for gas limit test
 - `# TODO Fix On Hedera:` comments added where fixes are required on Hedera for the core spec test framework to work or tests are skipped because of idenfied/triage issue
 - `# Fixed In Test:` comments added where a genuine test bug (not a Hedera behavior difference) was found and fixed while running against Hedera
 
