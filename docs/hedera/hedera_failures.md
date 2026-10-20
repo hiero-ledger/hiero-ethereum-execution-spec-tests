@@ -27,7 +27,7 @@
 | 21 | (CN?) EIP-7702 authorization tuple does not write delegation designation code | Skip Temporary | — | Pectra EIP-7707 |
 | 22 | (CN?) Delegated EOA used as transaction sender is not found as an existing account | Skip Temporary | — | Pectra EIP-7707 |
 | 23 | (Relay/Mirror node) Account-state queries for a deleted (self-destructed) contract fail with `-32020` mirror node 500 | Skip Temporary | — |
-| 24 | (CN?) Contract creation with empty initcode is rejected as `INVALID_ETHEREUM_TRANSACTION` | Triage | — |
+| 24 | (CN?) Contract creation with empty initcode is rejected as `INVALID_ETHEREUM_TRANSACTION` | Expected Behaviour | — | Validation happening at [HevmTransactionFactory.assertValidEthTx](https://github.com/hiero-ledger/hiero-consensus-node/blob/a6b2452980d4d576dd01df665fecea72b6446dd3/hedera-node/hedera-smart-contract-service-impl/src/main/java/com/hedera/node/app/service/contract/impl/infra/HevmTransactionFactory.java#L388) |
 
 ## Details
 
@@ -1003,6 +1003,8 @@ tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_recreate_self_destr
 **Pattern:** `JSONRPCError(code=-32003, message=Transaction rejected: INVALID_ETHEREUM_TRANSACTION - receipt for transaction 0.0.2@... contained error status INVALID_ETHEREUM_TRANSACTION)` raised as `SendTransactionExceptionError` when the transaction is submitted.
 
 **Root cause:** Not yet confirmed. The failing transactions are contract creations (`to` empty) with empty call data (`data=0x`). The same test class with a 1-byte or 32-byte initcode, the same 641-entry access list and the same gas-limit logic passes, so the access list, gas limit and transaction type are ruled out. Ethereum allows such a transaction (it creates an empty contract); Hedera's consensus node appears to reject it during Ethereum transaction validation. The exact rule has not been checked in the consensus node source.
+**Confirmation:** Validation happening at [HevmTransactionFactory.assertValidEthTx](https://github.com/hiero-ledger/hiero-consensus-node/blob/a6b2452980d4d576dd01df665fecea72b6446dd3/hedera-node/hedera-smart-contract-service-impl/src/main/java/com/hedera/node/app/service/contract/impl/infra/HevmTransactionFactory.java#L388). This is an intentional Hedera difference from Ethereum, not a bug in the test. Ethereum allows an empty-initcode create, and Hedera rejects it. The test should expect INVALID_ETHEREUM_TRANSACTION
+for this case, or the case should be skipped or marked as a known divergence.
 
 **Reproducer:**
 ```bash
