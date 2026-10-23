@@ -46,7 +46,10 @@ def test_tx_gas_limit(
     sender = pre.fund_eoa()
     to = pre.fund_eoa()
 
-    block_gas_limit = 100_000
+    # Run On Hedera: the Hedera network's block gas limit is fixed at 150_000_000
+    # and can't be lowered in `execute remote` mode, so use it as the limit;
+    # the tx's `gas_limit + 1` is then rejected by the node.
+    block_gas_limit = 150_000_000
     tx = Transaction(
         gas_limit=block_gas_limit + 1,
         to=to,

@@ -9,7 +9,6 @@ uv run execute remote -rA -vv --fork=Prague \
     --seed-account-sweep-amount='1_000_000 ether' \
     --default-max-fee-per-blob-gas=710_000_000_000 \
     --tx-wait-timeout=15 \
-    --max-tx-per-batch=1 \
     "tests/constantinople/"
 ```
 
@@ -74,7 +73,6 @@ PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcod
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_via_call[fork_Prague-state_test-opcode_CALLCODE]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_via_call[fork_Prague-state_test-opcode_DELEGATECALL]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_via_call[fork_Prague-state_test-opcode_STATICCALL]
-PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-pre_existing]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_changed_account[fork_Prague-state_test]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_max_code_size[fork_Prague-state_test-max-stop]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_max_code_size[fork_Prague-state_test-max-invalid]
@@ -94,8 +92,6 @@ PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcod
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_nonexistent[fork_Prague-call_opcode_DELEGATECALL-state_test]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_nonexistent[fork_Prague-call_opcode_CALL-state_test]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_nonexistent[fork_Prague-call_opcode_CALLCODE-state_test]
-PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_STATICCALL-state_test]
-PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted[fork_Prague-state_test-staticcall]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_create2_oog[fork_Prague-state_test-success-call]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_create2_oog[fork_Prague-state_test-success-callcode]
 PASSED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_create2_oog[fork_Prague-state_test-success-delegatecall]
@@ -112,17 +108,12 @@ SKIPPED [1] tests/constantinople/eip1014_create2/test_create2_revert.py:24: Pre-
 SKIPPED [1] packages/testing/src/execution_testing/cli/pytest_commands/plugins/execute/pre_alloc.py:1046: deterministic deployment proxy is not available on this network; skipping test that requires a deterministic contract deployment
 SKIPPED [5] tests/constantinople/eip1052_extcodehash/test_extcodehash.py:161: Pre-alloc modification not supported
 SKIPPED [3] tests/constantinople/eip1052_extcodehash/test_extcodehash.py:340: Pre-alloc modification not supported
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-create] - AssertionError: Code of 0x162f418adf4c8a2aa44108813d2586d13fefc679 is 0x32ff, expected 0x.
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_after_selfdestruct[fork_Prague-state_test-create2] - AssertionError: Code of 0xaa216c6cea9f17669002810072e0034848c20c3e is 0x32ff, expected 0x.
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_dynamic_argument[fork_Prague-state_test-target_type_precompile_with_balance] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x185ccf0245ed932e9487f44cd614e355f13c05f1 for key 0x0000000000000000000000000000000000000000000000...
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_DELEGATECALL-state_test] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x10685af20d151c68aa17518c88847faf639b9ab7 for key 0x0000000000000000000000000000000000000000000000...
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_CALL-state_test] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0xd05ab2939971a0bd93055db763c93a2c60de06d7 for key 0x0000000000000000000000000000000000000000000000...
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_call_to_selfdestruct[fork_Prague-call_opcode_CALLCODE-state_test] - execution_testing.base_types.composite_types.Storage.KeyValueMismatchError: incorrect value in address 0x0859074bf423bc985df1a0d5e562b6c6ceb7e298 for key 0x0000000000000000000000000000000000000000000000...
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted[fork_Prague-state_test-call] - AssertionError: Code of 0x100d84e72c20632957f282d1fd4ce34cb9ff5a21 is 0x6000ff, expected 0x.
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_created_and_deleted_recheck_outer[fork_Prague-state_test] - AssertionError: Code of 0x2dcf96085a565fd8e46ee2ba7464495e543f60fb is 0x6000ff, expected 0x.
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-pre_existing-callcode] - execution_testing.base_types.composite_types.Account.BalanceMismatchError: unexpected balance for account 0x8b4b72e11c346a06f193e34a250c50812462ce9e: want 0x00, got 0x02540be400
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-pre_existing-delegatecall] - execution_testing.base_types.composite_types.Account.BalanceMismatchError: unexpected balance for account 0xcdcfb3914a9452ec70c1d93cec9aee685b07cf51: want 0x00, got 0x02540be400
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-dynamic-callcode] - AssertionError: Code of 0xe05a9a73dae047d81d9f7d5b57daa8c5d2e0477e is 0x6020600060006000600073a8b58fa09118052b46fd944e3e5ff50e381145395af2, expected 0x.
-FAILED tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_subcall_selfdestruct[fork_Prague-state_test-dynamic-delegatecall] - AssertionError: Code of 0x6426b10b15c7596c0a112c873ac3a2ac5405c1a2 is 0x6020600060006000737ce19ed18e6b9b8df8a13c4b4a5aee2672bfe0355af4, expected 0x.
-====================================================================== 12 failed, 92 passed, 10 skipped, 1 warning in 913.74s (0:15:13) =======================================================================
+SKIPPED [3] tests/constantinople/eip1052_extcodehash/test_extcodehash.py:703: TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7
+SKIPPED [4] tests/constantinople/eip1052_extcodehash/test_extcodehash.py:1214: TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 8
+SKIPPED [2] tests/constantinople/eip1052_extcodehash/test_extcodehash.py:1272: TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7
+SKIPPED [1] tests/constantinople/eip1052_extcodehash/test_extcodehash.py:1365: TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7
+SKIPPED [4] tests/constantinople/eip1052_extcodehash/test_extcodehash.py:1465: TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 7
+SKIPPED [1] tests/constantinople/eip1052_extcodehash/test_extcodehash.py:1091: Run On Hedera: Deselect Due incompatibility: CALL with a nonzero value to a precompile address
+
+======================================================================= 89 passed, 25 skipped, 1 warning in 465.99s (0:07:45) =======================================================================
 ```
