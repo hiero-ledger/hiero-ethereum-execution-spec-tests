@@ -102,14 +102,7 @@ def authorizations_count(request: pytest.FixtureRequest, fork: Fork) -> int:
     """Size authorization lists using the active fork's intrinsic gas cost."""
     if isinstance(request.param, int):
         return request.param
-    # TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 5
-    #  On 120M gas this will produce 4759 authorizations -> huge call_data ->
-    #  Large jumbo `EthereumTransaction` payloads are silently truncated on ingest
-    #  ```
-    #  TransactionChecker - ParseException while parsing protobuf:
-    #    com.hedera.pbj.runtime.ParseException: java.nio.BufferUnderflowException
-    #  ```
-    max_gas = 12_000_000 # authorizations_count = ~439
+    max_gas = fork.transaction_gas_limit_cap() or Environment().gas_limit
 
     code_reserve = 0
     if request.param == "many_with_execution":
