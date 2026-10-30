@@ -4322,14 +4322,6 @@ def test_many_delegations(
         + entry_code_gas,
         max_gas,
     )
-    # TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 5
-    # On 120M gas this will produce 4759 authorizations -> huge call_data ->
-    # Large jumbo `EthereumTransaction` payloads are silently truncated on ingest
-    # ```
-    # TransactionChecker - ParseException while parsing protobuf:
-    #    com.hedera.pbj.runtime.ParseException: java.nio.BufferUnderflowException
-    # ```
-    delegation_count = min(delegation_count, 300)
 
     entry_address = pre.deploy_contract(entry_code)
 

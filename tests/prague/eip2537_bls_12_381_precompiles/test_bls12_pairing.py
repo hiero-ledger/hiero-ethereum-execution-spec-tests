@@ -213,10 +213,7 @@ def test_valid_multi_inf(
     """
     extra_gas = 100_000
 
-    # TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 5
-    #  Large jumbo `EthereumTransaction` payloads are silently truncated on ingest,
-    #  failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
-    max_gas_limit = 12_000_000
+    max_gas_limit = fork.transaction_gas_limit_cap() or Environment().gas_limit
 
     inf_data = Spec.INF_G1 + Spec.INF_G2
 
@@ -430,10 +427,7 @@ def test_invalid_multi_inf(
     """
     extra_gas = 100_000
 
-    # TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 5
-    #  Large jumbo `EthereumTransaction` payloads are silently truncated on ingest,
-    #  failing with `INVALID_TRANSACTION` / `BufferUnderflowException`
-    max_gas_limit = 12_000_000
+    max_gas_limit = fork.transaction_gas_limit_cap() or Environment().gas_limit
 
     inf_data = Spec.INF_G1 + Spec.INF_G2
     invalid_data = PointG1(Spec.P, 0) + Spec.INF_G2
