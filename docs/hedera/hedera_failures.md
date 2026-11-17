@@ -726,15 +726,17 @@ fails identically; bumping the call's `gas` from `0x30D40` to `1_000_000` also s
 `identity_1`/`identity_2`/etc. variants in the same file is that it sends a *nonzero value* to a *precompile address* —
 pointing to Hedera not supporting value transfers to precompile addresses via `CALL`/`CALLCODE` at all, independent of
 amount, balance, or gas. No test-side parameter fix found.
+- `test_all_opcodes` (the generic "call every opcode's dedicated contract" test): value sent to a precompile is rejected
 
-**Total:** 3 (Hedera-only; not yet checked against Geth)
+**Total:** 4 (Hedera-only; not yet checked against Geth)
 
-**Hedera-only — 3 tests**
+**Hedera-only — 4 tests**
 
 ```
 tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALL]
 tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALLCODE]
 tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_dynamic_argument[fork_Prague-state_test-target_type_precompile_with_balance]
+tests/frontier/opcodes/test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]
 ```
 
 The third test fails earlier: its `pre.fund_address(Address(2), 1)` setup is a plain top-level transfer of 1 tinybar to
@@ -773,8 +775,7 @@ tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-add
 **Pattern:** varies per test; see each below.
 
 ```
-- `test_all_opcodes` (the generic "call every opcode's dedicated contract" test): `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` at key `0x00` — the subcall to opcode `0x00`'s (`STOP`-only) contract reports failure, even though a bare `STOP` contract should trivially succeed. Doesn't fit any other pattern in this doc; needs isolated investigation.
-- `test_block_intermediate_state`: `JSONRPCError(code=-32003, message=Transaction rejected: INVALID_ETHEREUM_TRANSACTION)` for a contract-creation (`to: null`) legacy tx with `gas_limit=150_000_000`. Not yet isolated whether the gas limit size, the creation itself, or something else triggers the rejection.
+— the subcall to opcode `0x00`'s (`STOP`-only) contract reports failure, even though a bare `STOP` contract should trivially succeed. Doesn't fit any other pattern in this doc; needs isolated investigation.
 - `test_valid_reencoded_transaction`: `JSONRPCError(code=-32001, message=Requested resource not found. address '0x...'.)` — the RLP-reencoding baseline test queries an address the relay doesn't know about yet; not yet traced to a specific cause.
 - `test_scenarios` (`program_COINBASE`/`program_NUMBER`/`program_GASLIMIT`, `scenario_STATICCALL_STATICCALL`): expected `COINBASE`/`NUMBER`/`GASLIMIT` values don't match what's read back through a nested `STATICCALL`→`STATICCALL` context — actual values look arbitrary/unrelated (e.g. `98` instead of a real coinbase address), suggesting something specific to nested static calls rather than the opcodes themselves being wrong at top level.
 ```
@@ -784,8 +785,6 @@ tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-add
 **Hedera-only — 6 tests**
 
 ```
-tests/frontier/opcodes/test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]
-tests/frontier/examples/test_block_intermediate_state.py::test_block_intermediate_state[fork_Prague-blockchain_test]
 tests/frontier/validation/test_transaction_rlp.py::test_valid_reencoded_transaction[fork_Prague-transaction_test]
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_COINBASE-debug]
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_NUMBER-debug]
@@ -1327,6 +1326,7 @@ raised as `SendTransactionExceptionError` when the transaction is submitted.
 gas-limit logic passes, so the access list, gas limit and transaction type are ruled out. Ethereum allows such a
 transaction (it creates an empty contract); Hedera's consensus node appears to reject it during Ethereum transaction
 validation. The exact rule has not been checked in the consensus node source.
+- `test_block_intermediate_state`: `JSONRPCError(code=-32003, message=Transaction rejected: INVALID_ETHEREUM_TRANSACTION)` for a contract-creation (`to: null`) legacy tx with `gas_limit=150_000_000`. Not yet isolated whether the gas limit size, the creation itself, or something else triggers the rejection.
 
 **Confirmation:** Validation happening
 at [HevmTransactionFactory.assertValidEthTx](https://github.com/hiero-ledger/hiero-consensus-node/blob/a6b2452980d4d576dd01df665fecea72b6446dd3/hedera-node/hedera-smart-contract-service-impl/src/main/java/com/hedera/node/app/service/contract/impl/infra/HevmTransactionFactory.java#L388).
@@ -1336,7 +1336,7 @@ for this case, or the case should be skipped or marked as a known divergence. We
 double-check if it is really expecting a contract create call with empty call data.
 
 **Reproducer:**
-
+  !Last test not included
 ```bash
 uv run execute remote -rA -vv --fork=Prague \
     --rpc-endpoint=http://localhost:37546/ \
@@ -1348,11 +1348,12 @@ uv run execute remote -rA -vv --fork=Prague \
     "tests/shanghai/eip3860_initcode/test_initcode.py::TestContractCreationGasUsage::test_gas_usage[fork_Prague-state_test-initcode_name_empty-gas_test_case_exact_intrinsic_gas]"
 ```
 
-**Total:** 2 (Hedera-only; not yet checked against Geth)
+**Total:** 3 (Hedera-only; not yet checked against Geth)
 
-**Hedera-only — 2 tests**
+**Hedera-only — 3 tests**
 
 ```
 tests/shanghai/eip3860_initcode/test_initcode.py::TestContractCreationGasUsage::test_gas_usage[fork_Prague-state_test-initcode_name_empty-gas_test_case_exact_intrinsic_gas]
 tests/shanghai/eip3860_initcode/test_initcode.py::TestContractCreationGasUsage::test_gas_usage[fork_Prague-state_test-initcode_name_empty-gas_test_case_exact_execution_gas]
+tests/frontier/examples/test_block_intermediate_state.py::test_block_intermediate_state[fork_Prague-blockchain_test]
 ```
