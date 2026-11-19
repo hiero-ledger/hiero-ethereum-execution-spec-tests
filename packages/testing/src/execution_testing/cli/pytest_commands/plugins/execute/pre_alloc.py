@@ -1214,7 +1214,9 @@ class Alloc(SharedAlloc):
                     f"Deferred EOA balance for {tx.to} set to "
                     f"{bal_eth:.18f} ETH"
                 )
-                tx.value = HexNumber(sender_balance)
+                # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node,
+                # so scale it up by the wei-per-tinybar rate (same treatment as `fund_eoa`).
+                tx.value = HexNumber(scale_sub_tinybar_amount(sender_balance))
             tx.set_gas_price(
                 gas_price=gas_price,
                 max_fee_per_gas=max_fee_per_gas,

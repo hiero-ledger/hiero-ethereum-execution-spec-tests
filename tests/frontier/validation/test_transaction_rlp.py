@@ -140,7 +140,11 @@ def test_valid_reencoded_transaction(
     Verify the local field encoder reproduces the framework encoding
     byte for byte, anchoring the malformation tests to a valid baseline.
     """
-    tx = signed_tx(pre, fork)
+    # Run On Hedera: the transaction is signed up front, so the execute
+    # harness can't adjust it. Use Hedera's network gas price (710 Gwei /
+    # 0xA54F4C3C00, via eth_gasPrice) and a value of 1 tinybar (10^10 wei),
+    # since a nonzero value below 1 tinybar is rejected by the relay.
+    tx = signed_tx(pre, fork, gas_price=0xA54F4C3C00, value=10_000_000_000)
     fields = tx_fields(tx)
     assert encode_tx(fields) == bytes(tx.rlp())
     transaction_test(pre=pre, tx=tx)
