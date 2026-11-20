@@ -5,7 +5,7 @@
 | #  | Title                                                                                                                                             | Group                    | Status                       | Issue                                                                                                                             | Comment                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 |----|---------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1  | (Relay) `authorizationList` entries contain a duplicate snake_case `y_parity` field                                                               |                          | Fixed                        | [hiero-ledger/hiero-json-rpc-relay#5858](https://github.com/hiero-ledger/hiero-json-rpc-relay/issues/5858)                        | Fixed on Relay side                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| 2  | (CN?) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data                                               | UNKNOWN_INCOMPATIBILITY  | Temporary Patched            | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580)                      | Patched in framwork with comment: `# TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 2`                                                                                                                                                                                                                                                                                                                                |
+| 2  | (Relay) Returned transaction hash doesn't match the hash computed from the transaction's own RLP data                                               |   | Fixed            | [hiero-ledger/hiero-consensus-node#27580](https://github.com/hiero-ledger/hiero-consensus-node/issues/27580)                      | Patched in framwork with comment: `# TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 2`                                                                                                                                                                                                                                                                                                                                |
 | 3  | (Relay) Multiple same-sender transactions in one JSON-RPC batch race on nonce sequencing                                                          | KNOWN_INCOMPATIBILITY    | Triage                       | —                                                                                                                                 | Fixed with `ENABLE_TX_POOL: "true"`, `ENABLE_NONCE_ORDERING: "true"` in `RELAY_RELEASE=0.80.2-rc1`                                                                                                                                                                                                                                                                                                                                               |
 | 4  | (Relay) Head block's reported `gasLimit` doesn't match the configured environment gas limit                                                       |                          | Expected Behaviour           | [hiero-ledger/hiero-consensus-node#21633](https://github.com/hiero-ledger/hiero-consensus-node/issues/21633) (related)            | Confuguring local Hedera `MAX_TRANSACTION_GAS_LIMIT=150M`                                                                                                                                                                                                                                                                                                                                                                                        |
 | 5  | (CN) Large jumbo `EthereumTransaction` payloads are silently truncated on ingest, failing with `INVALID_TRANSACTION` / `BufferUnderflowException` |                          | Fixed                        | [hiero-ledger/hiero-consensus-node#27581](https://github.com/hiero-ledger/hiero-consensus-node/issues/27581)                      | Patched in framwork with comment: `# TODO Fix On Hedera: Details: docs/hedera/hedera_failures.md -> Details -> 5`                                                                                                                                                                                                                                                                                                                                |
@@ -14,9 +14,9 @@
 | 8  | (CN?) CALL/CALLCODE/DELEGATECALL into a SELFDESTRUCT-only contract reports failure                                                                | UNKNOWN_INCOMPATIBILITY  | Skip Temporary               | —                                                                                                                                 |
 | 9  | (Not supported on Hedera? Skip?) SELFDESTRUCT beneficiary must be an existing account on Hedera                                                   | UNKNOWN_INCOMPATIBILITY  | Skip Temporary               | —                                                                                                                                 |
 | 10 | (CN?) Warm-access gas cost not honored — repeat accesses (EIP-2929) and coinbase pre-warming (EIP-3651)                                           |                          | Fixed                        | [hiero-ledger/hiero-consensus-node#21335](https://github.com/hiero-ledger/hiero-consensus-node/issues/21335) (COINBASE part only) |
-| 11 | (CN?) BLOCKHASH returns 0 for genesis/recent blocks                                                                                               | UNKNOWN_INCOMPATIBILITY  | Skip Temporary               | —                                                                                                                                 |
+| 11 | (CN?) BLOCKHASH returns 0 for genesis/recent blocks                                                                                               |   | Skip Temporary               | https://github.com/hiero-ledger/hiero-mirror-node/issues/14610                                                                                                                             | To be fixed from Mirror Node side.
 | 12 | (CN?) CALL with a nonzero value to a precompile address fails                                                                                     | ACCEPTED_INCOMPATIBILITY | Deselect Due incompatibility | https://github.com/hiero-ledger/hiero-consensus-node/issues/21332                                                                 | Seems like 'Expected Behaviour' but Hedera docs should be updated                                                                                                                                                                                                                                                                                                                                                                                |
-| 13 | (CN?) Gas-accounting precision mismatches in precompile/CALL cost measurement                                                                     | UNKNOWN_INCOMPATIBILITY  | Skip Temporary               | —                                                                                                                                 |
+| 13 | (CN) Gas-accounting precision mismatches in precompile/CALL cost measurement                                                                     | ACCEPTED_INCOMPATIBILITY  | Skip               |            | Special behaviour for system accounts https://github.com/hiero-ledger/hiero-consensus-node/blob/fc0bf0f9a79bfd0fd160e48d4a951cd8a0b1bd5b/hedera-node/docs/system-accounts-operations.md
 | 14 | Miscellaneous singleton failures — not yet root-caused                                                                                            | UNKNOWN_INCOMPATIBILITY  | Skip Temporary               | —                                                                                                                                 |
 | 15 | `test_tx_gas_limit`: the block gas limit can't be lowered in `execute remote` mode                                                                |                          | Expected Behaviour           | —                                                                                                                                 |
 | 16 | (CN?) Out-of-gas transaction does not consume the full declared gas_limit                                                                         | UNKNOWN_INCOMPATIBILITY  | Skip Temporary               | —                                                                                                                                 |
@@ -690,7 +690,7 @@ tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py::test_warm_coinbase_c
 
 ---
 
-### 11. (CN?) BLOCKHASH returns 0 for genesis/recent blocks
+### 11. (MN) BLOCKHASH returns 0 for genesis/recent blocks
 
 **Pattern:** `Storage.KeyValueMismatchError: ... want 0x0, got 0x1` — storing `ISZERO(BLOCKHASH(n))`, expecting `0`
 (hash present) but getting `1` (hash absent/zero).
@@ -726,15 +726,17 @@ fails identically; bumping the call's `gas` from `0x30D40` to `1_000_000` also s
 `identity_1`/`identity_2`/etc. variants in the same file is that it sends a *nonzero value* to a *precompile address* —
 pointing to Hedera not supporting value transfers to precompile addresses via `CALL`/`CALLCODE` at all, independent of
 amount, balance, or gas. No test-side parameter fix found.
+- `test_all_opcodes` (the generic "call every opcode's dedicated contract" test): value sent to a precompile is rejected
 
-**Total:** 3 (Hedera-only; not yet checked against Geth)
+**Total:** 4 (Hedera-only; not yet checked against Geth)
 
-**Hedera-only — 3 tests**
+**Hedera-only — 4 tests**
 
 ```
 tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALL]
 tests/frontier/identity_precompile/test_identity.py::test_call_identity_precompile[fork_Prague-state_test-identity_1_nonzerovalue-call_type_CALLCODE]
 tests/constantinople/eip1052_extcodehash/test_extcodehash.py::test_extcodehash_dynamic_argument[fork_Prague-state_test-target_type_precompile_with_balance]
+tests/frontier/opcodes/test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]
 ```
 
 The third test fails earlier: its `pre.fund_address(Address(2), 1)` setup is a plain top-level transfer of 1 tinybar to
@@ -773,8 +775,6 @@ tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-add
 **Pattern:** varies per test; see each below.
 
 ```
-- `test_all_opcodes` (the generic "call every opcode's dedicated contract" test): `Storage.KeyValueMismatchError: ... want 0x1, got 0x0` at key `0x00` — the subcall to opcode `0x00`'s (`STOP`-only) contract reports failure, even though a bare `STOP` contract should trivially succeed. Doesn't fit any other pattern in this doc; needs isolated investigation.
-- `test_block_intermediate_state`: `JSONRPCError(code=-32003, message=Transaction rejected: INVALID_ETHEREUM_TRANSACTION)` for a contract-creation (`to: null`) legacy tx with `gas_limit=150_000_000`. Not yet isolated whether the gas limit size, the creation itself, or something else triggers the rejection.
 - `test_valid_reencoded_transaction`: `JSONRPCError(code=-32001, message=Requested resource not found. address '0x...'.)` — the RLP-reencoding baseline test queries an address the relay doesn't know about yet; not yet traced to a specific cause.
 - `test_scenarios` (`program_COINBASE`/`program_NUMBER`/`program_GASLIMIT`, `scenario_STATICCALL_STATICCALL`): expected `COINBASE`/`NUMBER`/`GASLIMIT` values don't match what's read back through a nested `STATICCALL`→`STATICCALL` context — actual values look arbitrary/unrelated (e.g. `98` instead of a real coinbase address), suggesting something specific to nested static calls rather than the opcodes themselves being wrong at top level.
 ```
@@ -784,13 +784,21 @@ tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-add
 **Hedera-only — 6 tests**
 
 ```
-tests/frontier/opcodes/test_all_opcodes.py::test_all_opcodes[fork_Prague-state_test]
-tests/frontier/examples/test_block_intermediate_state.py::test_block_intermediate_state[fork_Prague-blockchain_test]
 tests/frontier/validation/test_transaction_rlp.py::test_valid_reencoded_transaction[fork_Prague-transaction_test]
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_COINBASE-debug]
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_NUMBER-debug]
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug]
 ```
+
+**Fixed In Test:** `test_valid_reencoded_transaction` used to fail with
+`JSONRPCError(code=-32001, message=Requested resource not found. address '0x...'.)`. The test signs its transaction up
+front (`value=1`, `gas_price=10`), and `TransactionPost.prepare_transactions` then scaled `value` to 1 tinybar without
+re-signing. The stale signature recovered to an unrelated, unfunded address, so the relay couldn't find it. Fixes:
+- `execution/transaction_post.py`: don't scale `value` on a transaction that's already signed.
+- `plugins/execute/pre_alloc.py`: scale the deferred `pre.fund_eoa()` sender funding up to 1 tinybar. It was only above
+  1 tinybar before because of the rescaled value.
+- `tests/frontier/validation/test_transaction_rlp.py`: sign the valid baseline transaction with Hedera's gas price
+  (710 Gwei) and a value of 1 tinybar, marked `# Run On Hedera:`.
 
 ---
 
@@ -1327,6 +1335,7 @@ raised as `SendTransactionExceptionError` when the transaction is submitted.
 gas-limit logic passes, so the access list, gas limit and transaction type are ruled out. Ethereum allows such a
 transaction (it creates an empty contract); Hedera's consensus node appears to reject it during Ethereum transaction
 validation. The exact rule has not been checked in the consensus node source.
+- `test_block_intermediate_state`: `JSONRPCError(code=-32003, message=Transaction rejected: INVALID_ETHEREUM_TRANSACTION)` for a contract-creation (`to: null`) legacy tx with `gas_limit=150_000_000`. Not yet isolated whether the gas limit size, the creation itself, or something else triggers the rejection.
 
 **Confirmation:** Validation happening
 at [HevmTransactionFactory.assertValidEthTx](https://github.com/hiero-ledger/hiero-consensus-node/blob/a6b2452980d4d576dd01df665fecea72b6446dd3/hedera-node/hedera-smart-contract-service-impl/src/main/java/com/hedera/node/app/service/contract/impl/infra/HevmTransactionFactory.java#L388).
@@ -1336,7 +1345,7 @@ for this case, or the case should be skipped or marked as a known divergence. We
 double-check if it is really expecting a contract create call with empty call data.
 
 **Reproducer:**
-
+  !Last test not included
 ```bash
 uv run execute remote -rA -vv --fork=Prague \
     --rpc-endpoint=http://localhost:37546/ \
@@ -1348,11 +1357,12 @@ uv run execute remote -rA -vv --fork=Prague \
     "tests/shanghai/eip3860_initcode/test_initcode.py::TestContractCreationGasUsage::test_gas_usage[fork_Prague-state_test-initcode_name_empty-gas_test_case_exact_intrinsic_gas]"
 ```
 
-**Total:** 2 (Hedera-only; not yet checked against Geth)
+**Total:** 3 (Hedera-only; not yet checked against Geth)
 
-**Hedera-only — 2 tests**
+**Hedera-only — 3 tests**
 
 ```
 tests/shanghai/eip3860_initcode/test_initcode.py::TestContractCreationGasUsage::test_gas_usage[fork_Prague-state_test-initcode_name_empty-gas_test_case_exact_intrinsic_gas]
 tests/shanghai/eip3860_initcode/test_initcode.py::TestContractCreationGasUsage::test_gas_usage[fork_Prague-state_test-initcode_name_empty-gas_test_case_exact_execution_gas]
+tests/frontier/examples/test_block_intermediate_state.py::test_block_intermediate_state[fork_Prague-blockchain_test]
 ```
