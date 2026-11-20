@@ -78,8 +78,11 @@ class TransactionPost(BaseExecute):
                     max_fee_per_blob_gas=max_fee_per_blob_gas,
                 )
                 # Run On Hedera: a nonzero value transfer below 1 tinybar is rejected by the node,
-                # so scale it up by the wei-per-tinybar rate.
-                tx.value = scale_sub_tinybar_amount(Number(tx.value))
+                # so scale it up by the wei-per-tinybar rate. Skip transactions the test
+                # already signed: changing the value would invalidate the signature, and
+                # it would then recover to an unrelated (unfunded) sender address.
+                if not {"v", "r", "s"} & tx.model_fields_set:
+                    tx.value = scale_sub_tinybar_amount(Number(tx.value))
 
     def get_required_sender_balances(
         self, *, fork: Fork

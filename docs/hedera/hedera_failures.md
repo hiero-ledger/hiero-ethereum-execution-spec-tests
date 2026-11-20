@@ -775,7 +775,6 @@ tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-add
 **Pattern:** varies per test; see each below.
 
 ```
-— the subcall to opcode `0x00`'s (`STOP`-only) contract reports failure, even though a bare `STOP` contract should trivially succeed. Doesn't fit any other pattern in this doc; needs isolated investigation.
 - `test_valid_reencoded_transaction`: `JSONRPCError(code=-32001, message=Requested resource not found. address '0x...'.)` — the RLP-reencoding baseline test queries an address the relay doesn't know about yet; not yet traced to a specific cause.
 - `test_scenarios` (`program_COINBASE`/`program_NUMBER`/`program_GASLIMIT`, `scenario_STATICCALL_STATICCALL`): expected `COINBASE`/`NUMBER`/`GASLIMIT` values don't match what's read back through a nested `STATICCALL`→`STATICCALL` context — actual values look arbitrary/unrelated (e.g. `98` instead of a real coinbase address), suggesting something specific to nested static calls rather than the opcodes themselves being wrong at top level.
 ```
@@ -790,6 +789,16 @@ tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchai
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_NUMBER-debug]
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug]
 ```
+
+**Fixed In Test:** `test_valid_reencoded_transaction` used to fail with
+`JSONRPCError(code=-32001, message=Requested resource not found. address '0x...'.)`. The test signs its transaction up
+front (`value=1`, `gas_price=10`), and `TransactionPost.prepare_transactions` then scaled `value` to 1 tinybar without
+re-signing. The stale signature recovered to an unrelated, unfunded address, so the relay couldn't find it. Fixes:
+- `execution/transaction_post.py`: don't scale `value` on a transaction that's already signed.
+- `plugins/execute/pre_alloc.py`: scale the deferred `pre.fund_eoa()` sender funding up to 1 tinybar. It was only above
+  1 tinybar before because of the rescaled value.
+- `tests/frontier/validation/test_transaction_rlp.py`: sign the valid baseline transaction with Hedera's gas price
+  (710 Gwei) and a value of 1 tinybar, marked `# Run On Hedera:`.
 
 ---
 
