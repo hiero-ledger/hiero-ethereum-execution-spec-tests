@@ -279,6 +279,11 @@ def test_create_oog_from_eoa_refunds(
         sender=sender,
         to=None,
         data=init_code,
+        # Run On Hedera: Hedera charges its network gas price (710 Gwei /
+        # 0xA54F4C3C00, via eth_gasPrice), not the offered price. With the
+        # framework's 1.5x bumped price the sender would keep a nonzero
+        # balance after OOG, so pay exactly the network price.
+        gas_price=0xA54F4C3C00
         gas_limit=5_000_000
         if extra_gas and oog_scenario == OogScenario.NO_OOG
         else 400_000,

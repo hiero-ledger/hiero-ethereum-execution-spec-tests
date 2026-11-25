@@ -17,9 +17,9 @@
 | 11 | (CN?) BLOCKHASH returns 0 for genesis/recent blocks                                                                                               |   | Skip Temporary               | https://github.com/hiero-ledger/hiero-mirror-node/issues/14610                                                                                                                             | To be fixed from Mirror Node side.
 | 12 | (CN?) CALL with a nonzero value to a precompile address fails                                                                                     | ACCEPTED_INCOMPATIBILITY | Deselect Due incompatibility | https://github.com/hiero-ledger/hiero-consensus-node/issues/21332                                                                 | Seems like 'Expected Behaviour' but Hedera docs should be updated                                                                                                                                                                                                                                                                                                                                                                                |
 | 13 | (CN) Gas-accounting precision mismatches in precompile/CALL cost measurement                                                                     | ACCEPTED_INCOMPATIBILITY  | Skip               |            | Special behaviour for system accounts https://github.com/hiero-ledger/hiero-consensus-node/blob/fc0bf0f9a79bfd0fd160e48d4a951cd8a0b1bd5b/hedera-node/docs/system-accounts-operations.md
-| 14 | Miscellaneous singleton failures — not yet root-caused                                                                                            | UNKNOWN_INCOMPATIBILITY  | Skip Temporary               | —                                                                                                                                 |
+| 14 | Miscellaneous singleton failures                                                                                                                  |                          | Fixed                        | —                                                                                                                                 | test_scenarios` (`program_COINBASE`/`program_NUMBER`/`program_GASLIMIT`, `scenario_STATICCALL_STATICCALL`) - skipped only make sense on fill mode
 | 15 | `test_tx_gas_limit`: the block gas limit can't be lowered in `execute remote` mode                                                                |                          | Expected Behaviour           | —                                                                                                                                 |
-| 16 | (CN?) Out-of-gas transaction does not consume the full declared gas_limit                                                                         | UNKNOWN_INCOMPATIBILITY  | Skip Temporary               | —                                                                                                                                 |
+| 16 | (CN) Hedera charges the network gas price, not the offered `gasPrice` (looked like OOG under-charge)                                              |                          | Fixed                        | —                                                                                                                                 |
 | 17 | (Relay?) RPC rejects transaction — invalid yParity (-32000)                                                                                       | KNOWN_INCOMPATIBILITY    | Skip Temporary               | —                                                                                                                                 | Pectra EIP-7707                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | 18 | (Relay?) Zero-value r/s in authorization tuple serialized as empty '0x'                                                                           | KNOWN_INCOMPATIBILITY    | Skip Temporary               | —                                                                                                                                 | Pectra EIP-7707                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | 19 | (CN?) Call to EIP-7702-delegated EOA rejected as INVALID_CONTRACT_ID                                                                              | KNOWN_INCOMPATIBILITY    | Skip Temporary               | —                                                                                                                                 | Pectra EIP-7707                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -770,7 +770,7 @@ tests/frontier/precompiles/test_precompiles.py::test_precompiles[fork_Prague-add
 
 ---
 
-### 14. Miscellaneous singleton failures — not yet root-caused
+### 14. Miscellaneous singleton failures
 
 **Pattern:** varies per test; see each below.
 
@@ -789,6 +789,13 @@ tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchai
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_NUMBER-debug]
 tests/frontier/scenarios/test_scenarios.py::test_scenarios[fork_Prague-blockchain_test-test_program_program_GASLIMIT-debug]
 ```
+`test_scenarios` (`program_COINBASE`/`program_NUMBER`/`program_GASLIMIT`, `scenario_STATICCALL_STATICCALL`) - skipped
+The original upstream version only works in fill
+- In fill mode the framework creates the chain itself, so it decides the values: coinbase = Environment().fee_recipient, the first block is number 1, 
+and gas limit = Environment().gas_limit. The test can hard-code them as expected values, and they're correct there.
+- In execute remote mode the network decides those values. COINBASE and NUMBER would fail on any live network.
+- The other test programs (CALLVALUE, ORIGIN, GASPRICE and so on) do work in execute mode, because the test sets those values itself.
+
 
 **Fixed In Test:** `test_valid_reencoded_transaction` used to fail with
 `JSONRPCError(code=-32001, message=Requested resource not found. address '0x...'.)`. The test signs its transaction up
@@ -829,23 +836,36 @@ tests/frontier/validation/test_transaction.py::test_tx_gas_limit[fork_Prague-blo
 
 ---
 
-### 16. (CN?) Out-of-gas transaction does not consume the full declared gas_limit
+### 16. (CN) Hedera charges the network gas price, not the offered `gasPrice` (looked like OOG under-charge)
 
 **Pattern:**
 `execution_testing.base_types.composite_types.Account.BalanceMismatchError: unexpected balance for account 0x...: want 0x00, got 0x01ff973cafa80000` —
 the sender's post-tx balance is expected to be fully drained (the EVM-spec penalty for running out of gas is to consume
 the entire `gas_limit`, with no refund), but a nonzero balance remains.
 
-**Root cause:** Per the EVM spec, when a transaction runs out of gas, the *entire* declared `gas_limit` is charged to
-the sender as a penalty — none of it is refunded, regardless of how much gas was actually consumed by opcodes before the
-OOG point. `test_create_oog_from_eoa_refunds` relies on exactly this to assert `sender` ends with `balance=0` after an
-OOG scenario (pre-EIP-8037). Tracing a failing case: the sender was funded with precisely
-`gas_limit(400_000) × gas_price(1070 Gwei) = 0.428 ETH` (confirmed via the harness's own deferred-funding calculation,
-which matches exactly), yet it ends with `0.144 ETH` left over — meaning only ~265,420 of the 400,000 declared gas units
-were actually charged. Hedera appears to charge only for gas consumed up to the point of failure (like a `REVERT`), not
-the full declared `gas_limit` as EVM-spec OOG semantics require. This is independent of transaction funding — any
-funding strategy (hardcoded amount or deferred) hits the same shortfall, since the gas simply isn't being charged in
-full.
+**Root cause:** Not an out-of-gas problem. Hedera does charge the full declared `gas_limit` on OOG, but at its
+**network gas price** (710 Gwei, `eth_gasPrice`), not at the transaction's offered `gasPrice`. The framework offers
+`eth_gasPrice × 1.5` rounded up to a whole tinybar (`FEE_BUMP_MULTIPLIER`, `plugins/shared/live_client_flags.py`), i.e.
+1070 Gwei, and funds the sender with exactly `gas_limit × 1070 Gwei`. On Ethereum a legacy transaction pays its full
+`gasPrice`, so the sender would end at 0. On Hedera it keeps the difference.
+
+Confirmed live (relay `0.82.0-rc1`), receipts of failing OOG transactions `0x8bd7f967…` / `0xc94040f5…`:
+
+| Field                       | Value                                   |
+|-----------------------------|-----------------------------------------|
+| status                      | `0x0` (OOG, as intended)                |
+| gasLimit / gasUsed          | 400,000 / **400,000** (fully consumed)  |
+| tx `gasPrice`               | 1070 Gwei                               |
+| receipt `effectiveGasPrice` | **710 Gwei**                            |
+
+Funded `400,000 × 1070 Gwei = 0.428 ETH`, charged `400,000 × 710 Gwei = 0.284 ETH`, leftover `0.144 ETH` =
+`0x01ff973cafa80000`, exactly the reported balance. The earlier "only ~265,420 gas charged" reading was the price ratio
+(710/1070) mistaken for a gas amount.
+
+**Fixed In Test:** the transaction sets `gas_price=0xA54F4C3C00` (710 Gwei, Hedera's network price) with a
+`# Run On Hedera:` comment at `tests/cancun/create/test_create_oog_from_eoa_refunds.py`, so funding equals the charge.
+All 24 variants pass. Any other test that asserts a sender's exact balance after paying gas at the bumped price will hit
+the same difference.
 
 **Total:** 16 confirmed — every `refund_type` × `oog_scenario in {oog_code_deposit, oog_invalid_opcode}` combination
 fails identically (same leftover `0x01ff973cafa80000`). All 8 `no_oog` variants pass, since that scenario doesn't assert
